@@ -1,0 +1,4 @@
+make -f simul_201612_cens nsim=25 n=62000 scale=198.232490 shape=1.571168 FP=1.5 -j 10 > output_exp_1.5_10_62000.txt
+make -f simul_201612_cens nsim=25 n=62000 scale=198.232490 shape=1.571168 FP=2 -j 10 > output_exp_2_10_6200.txt
+make -f simul_201612_cens nsim=25 n=62000 scale=198.232490 shape=1.571168 FP=4 -j 10 > output_exp_4_10_6200.txt
+

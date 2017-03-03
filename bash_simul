@@ -1,0 +1,5 @@
+make -f simul nsim=100 n=62000 scale=198.232490 shape=1.571168 FP=1.5 seed=1 -j 5 > output_1.5_1.txt &
+make -f simul nsim=100 n=62000 scale=198.232490 shape=1.571168 FP=2 seed=1 -j 5 > output_2_1.txt &
+make -f simul nsim=100 n=62000 scale=198.232490 shape=1.571168 FP=4 seed=1 -j 5 > output_4_1.txt &
+
+

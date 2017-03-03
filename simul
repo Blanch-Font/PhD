@@ -1,0 +1,43 @@
+RMD2HTML = run-knit2html.R
+
+DATA = simul1_$(scale)_$(shape)_$(seed).RData simul2_$(scale)_$(shape)_$(FP)_$(seed).RData simul3_$(scale)_$(shape)_$(FP)_$(seed).RData\
+        simul3_cens_$(scale)_$(shape)_$(FP)_$(seed).RData simul3_cens_FP_$(scale)_$(shape)_$(FP)_$(seed).RData
+
+WWW = art_simul_scenari1_$(scale)_$(shape)_$(seed)_out.html art_simul_scenari2_$(scale)_$(shape)_$(FP)_$(seed)_out.html\
+       art_simul_scenari3_$(scale)_$(shape)_$(FP)_$(seed)_out.html art_simul_scenari3_cens_$(scale)_$(shape)_$(FP)_$(seed)_out.html\
+       art_simul_scenari3_cens_FP_$(scale)_$(shape)_$(FP)_$(seed)_out.html
+
+common : $(DATA) $(WWW)
+	touch $@
+
+simul1_$(scale)_$(shape)_$(seed).RData : art_simul_scenari1.R
+	Rscript -e 'Nsim <- $(nsim); N <- $(n); scale_param <- $(scale); shape_param <- $(shape); OFILE <- "$@"; set.seed($(seed)); source("$<")'
+
+art_simul_scenari1_$(scale)_$(shape)_$(seed)_out.html : art_simul_scenari1_out.Rmd simul1_$(scale)_$(shape)_$(seed).RData
+	Rscript -e 'load("simul1_$(scale)_$(shape)_$(seed).RData"); Nsim <- $(nsim); N <- $(n); scale_param <- $(scale); shape_param <- $(shape); OUT <- "$@"; IN <- "$<"; source("$(RMD2HTML)")'
+
+simul2_$(scale)_$(shape)_$(FP)_$(seed).RData : art_simul_scenari2.R
+	Rscript -e 'Nsim <- $(nsim); N <- $(n); scale_param <- $(scale); shape_param <- $(shape); HR_FP <- $(FP); OFILE <- "$@"; set.seed($(seed)); source("$<")'
+
+art_simul_scenari2_$(scale)_$(shape)_$(FP)_$(seed)_out.html : art_simul_scenari2_out.Rmd simul2_$(scale)_$(shape)_$(FP)_$(seed).RData
+	Rscript -e 'load("simul2_$(scale)_$(shape)_$(FP)_$(seed).RData"); Nsim <- $(nsim); N <- $(n); scale_param <- $(scale); shape_param <- $(shape); HR_FP <- $(FP); OUT <- "$@"; IN <- "$<"; source("$(RMD2HTML)")'
+
+simul3_$(scale)_$(shape)_$(FP)_$(seed).RData : art_simul_scenari3.R
+	Rscript -e 'Nsim <- $(nsim); N <- $(n); scale_param <- $(scale); shape_param <- $(shape); HR_FP <- $(FP); OFILE <- "$@"; set.seed($(seed)); source("$<")'
+
+art_simul_scenari3_$(scale)_$(shape)_$(FP)_$(seed)_out.html : art_simul_scenari3_out.Rmd simul3_$(scale)_$(shape)_$(FP)_$(seed).RData
+	Rscript -e 'load("simul3_$(scale)_$(shape)_$(FP)_$(seed).RData"); Nsim <- $(nsim); N <- $(n); scale_param <- $(scale); shape_param <- $(shape); HR_FP <- $(FP); OUT <- "$@"; IN <- "$<"; source("$(RMD2HTML)")'
+
+simul3_cens_$(scale)_$(shape)_$(FP)_$(seed).RData : art_simul_scenari3_cens.R
+	Rscript -e 'Nsim <- $(nsim); N <- $(n); scale_param <- $(scale); shape_param <- $(shape); HR_FP <- $(FP); OFILE <- "$@"; set.seed($(seed)); source("$<")'
+
+art_simul_scenari3_cens_$(scale)_$(shape)_$(FP)_$(seed)_out.html : art_simul_scenari3_out.Rmd\
+                                                                    simul3_cens_$(scale)_$(shape)_$(FP)_$(seed).RData
+	Rscript -e 'load("simul3_cens_$(scale)_$(shape)_$(FP)_$(seed).RData"); Nsim <- $(nsim); N <- $(n); scale_param <- $(scale); shape_param <- $(shape); HR_FP <- $(FP); OUT <- "$@"; IN <- "$<"; source("$(RMD2HTML)")'
+
+simul3_cens_FP_$(scale)_$(shape)_$(FP)_$(seed).RData : art_simul_scenari3_cens_FP.R
+	Rscript -e 'Nsim <- $(nsim); N <- $(n); scale_param <- $(scale); shape_param <- $(shape); HR_FP <- $(FP); OFILE <- "$@"; set.seed($(seed)); source("$<")'
+
+art_simul_scenari3_cens_FP_$(scale)_$(shape)_$(FP)_$(seed)_out.html : art_simul_scenari3_out.Rmd\
+                                                                       simul3_cens_FP_$(scale)_$(shape)_$(FP)_$(seed).RData
+	Rscript -e 'load("simul3_cens_FP_$(scale)_$(shape)_$(FP)_$(seed).RData"); Nsim <- $(nsim); N <- $(n); scale_param <- $(scale); shape_param <- $(shape); HR_FP <- $(FP); OUT <- "$@"; IN <- "$<"; source("$(RMD2HTML)")'

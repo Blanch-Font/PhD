@@ -1,0 +1,122 @@
+---
+title: "INCA analisi"
+author: "JBF"
+date: "3/2/2017"
+output: html_document
+---
+
+```{r, echo = F}
+options(width = 250)
+library(msm)
+library(gridExtra)
+library(dplyr)
+library(DT)
+library(ggplot2)
+library(survival)
+source("~/PhD/aux_fun.R")
+
+# Creació de la bbdd
+load('bbdd.RData')
+
+bbdd <- bbdd %>% select(-a.f1.o.mx, -Edad.inter, -FP32, -crib.pos2, -crib.pos.temps2,
+                        -c.posFP32, -c.posFP3.temps2, -Fecha.de.diagnstico, -temps.diag.CI,
+                        -Densidad2) %>%
+  left_join(bbdd_1 %>% select(CCAA, Mujer.id, Episodio, Fecha.de.diagnstico:Fenotip),
+            by = c("Mujer.id", "Episodio"))
+
+# * Seleccionem només catalunya
+# * Categoritzem Mujer.id
+# * Creem la variable resposta amb tres respostes: 
+#   - "No cancer",
+#   - "Cancer dectat en el cribratge" (CC)
+#   - "Cancer d'interval" (CI)
+# * Definim el T0 com la diferencia d'edat respecte a 49 anys.
+# * Definim el T1 com la diferencia d'edat respecte a 49 anys més el 
+#   min(temps a la seguent Mx i 2.5 anys).
+bbdd.cat <- bbdd %>% filter(CCAA == "Catalu\xf1a") #abans: levels(CCAA)[2]
+bbdd.cat$tipuscan <- factor(bbdd.cat$tipuscan, labels = c("No", "CC", "CI"))
+bbdd.cat$edad <- as.numeric(difftime(bbdd.cat$Fecha.mx, bbdd.cat$Fech.nac,
+                                     units = "days"))/365.242199
+bbdd.cat$T0 <- bbdd.cat$edad - 49
+bbdd.cat$T1 <- bbdd.cat$edad + bbdd.cat$temps.per2_m - 49
+# Abans
+  # mutate(Mujer.id = Mujer.id, 
+  #        tipuscan=factor(tipuscan,labels = c("No","CC","CI")),
+  #        edad=as.numeric(difftime(Fecha.mx,Fech.nac,units="days"))/365.242199,
+  #        T0=edad - 49, T1=edad + temps.per2_m - 49) #%>%
+  # select(Mujer.id, N.Crib3, tipuscan, T0, T1, FP22, FP22_m, Fenotip)
+  # select(-Inic,-edat.cat2)
+# save(bbdd.cat, file = "bbdd_cat_20150917.RData")
+
+# bbdd.cat %>% count(N.Crib3)
+n1 <- bbdd.cat %>% filter(N.Crib3 == 1) %>% select(Mujer.id)
+# Seleccionem totes les dones amb el 1r cribratge en el periode
+bbdd.n1 <- bbdd.cat %>% filter(Mujer.id %in% n1$Mujer.id) %>%
+  select(Mujer.id, N.Crib3, T0, T1, FP22, tipuscan, Est.inter)
+# bbdd.n1 %>% count(N.Crib3)
+bbdd.n1.frst <- bbdd.n1 %>% filter(N.Crib3 == 1) %>%
+  select(Mujer.id, T0) %>% distinct(Mujer.id, .keep_all = T)
+bbdd.n1.frst$age.gp <- cut(bbdd.n1.frst$T0, breaks = seq(0, 24, 4), include.lowest = T)
+bbdd.n1 <- bbdd.n1 %>% left_join(bbdd.n1.frst %>% select(-T0), by = "Mujer.id") %>%
+  group_by(Mujer.id) %>% mutate(FP.msm = lag(FP22))
+bbdd.n1$FP.msm[is.na(bbdd.n1$FP.msm)] <- 0
+
+# Anàlisis MSM
+msm_inca <- model_msm_inca(bbdd.n1)
+# Anàlisis Cox
+cox_inca <- model_cox_inca(bbdd.n1)
+# Anàlisis Discret
+disc_inca <- model_discret_inca(bbdd.n1)
+```
+
+# Outputs MSM
+## Model 3 estats (HR)
+```{r, echo = F}
+msm_inca$mod_3$HZ$FP.msm
+```
+
+## 2-state model
+### Model with event as SCD or IC. Time up to IC.
+```{r, echo = F}
+msm_inca$mod_no$HZ$FP.msm
+```
+
+### Model with event as SCD or IC. Time up to next mamography.
+```{r, echo = F}
+msm_inca$mod_si$HZ$FP.msm
+```
+# Cox model
+## Causa-específic
+```{r,echo=F}
+data.frame(coef = exp(cox_inca$mod_cc$coef), confint = exp(cox_inca$mod_cc$confint))
+```
+
+## 2-state model
+### Model with event as SCD or IC. Time up to IC.
+```{r, echo = F}
+data.frame(coef = exp(cox_inca$mod_no$coef), confint = exp(cox_inca$mod_no$confint))
+```
+
+### Model with event as SCD or IC. Time up to next mamography.
+```{r, echo = F}
+data.frame(coef = exp(cox_inca$mod_si$coef), confint = exp(cox_inca$mod_si$confint))
+```
+
+# Discret-time model
+```{r,echo=F}
+data.frame(coef = exp(disc_inca$mod_cc$coef),
+           confint = exp(disc_inca$mod_cc$confint))[c('typeic:FP.msm', 'typescd:FP.msm'),]
+```
+
+## 2-state model
+### Model with event as SCD or IC. Time up to IC.
+```{r, echo = F}
+data.frame(coef = exp(disc_inca$mod_no$coef),
+           confint = exp(disc_inca$mod_no$confint))['FP.msm',]
+```
+
+### Model with event as SCD or IC. Time up to next mamography.
+```{r, echo = F}
+data.frame(coef = exp(disc_inca$mod_si$coef),
+           confint = exp(disc_inca$mod_si$confint))['FP.msm',]
+```

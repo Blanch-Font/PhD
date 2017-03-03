@@ -1,0 +1,6 @@
+make -f simul nsim=10 n=6200 scale=688.1963922241 shape=1 FP=1.5 seed=10 -j 5 > output_exp_1.5_10_10_6200.txt &
+make -f simul nsim=10 n=6200 scale=688.1963922241 shape=1 FP=1.5 seed=20 -j 5 > output_exp_1.5_20_10_6200.txt &
+make -f simul nsim=10 n=6200 scale=688.1963922241 shape=1 FP=1.5 seed=30 -j 5 > output_exp_1.5_30_10_6200.txt &
+make -f simul nsim=10 n=6200 scale=688.1963922241 shape=1 FP=1.5 seed=40 -j 5 > output_exp_1.5_40_10_6200.txt &
+make -f simul nsim=10 n=6200 scale=688.1963922241 shape=1 FP=1.5 seed=50 -j 5 > output_exp_1.5_50_10_6200.txt &
+

@@ -1,0 +1,22 @@
+RMD2HTML = run-knit2html.R
+
+size = 10
+SEED = 646 562 113 589 354 423  52 260 392 821 #508 307 427 692 85 225 273 271 611 426
+# Generat amb "set.seed(10); sample.int(n = 1000, size = 20)"
+DATA_SEED = $(foreach v,$(SEED),$(shell printf 'simul3_cens_FP_ini_$(scale)_$(shape)_$(FP)_%03d_$(n)_$(nsim).RData' $(v)))
+# DATA = simul3_cens_$(scale)_$(shape)_$(FP)_$(seed)_$(n)_$(nsim).RData
+DATA = $(DATA_SEED) simul3_cens_FP_ini_$(scale)_$(shape)_$(FP)_all_$(n)_$(nsim).RData
+
+WWW = simul3_cens_FP_ini_$(scale)_$(shape)_$(FP)_10_$(n)_$(nsim).html
+
+common : $(DATA) $(WWW)
+	touch $@
+
+simul3_cens_FP_ini_$(scale)_$(shape)_$(FP)_%_$(n)_$(nsim).RData : art_simul_scenari3_cens_FP_inicial.R
+	Rscript -e 'Nsim <- $(nsim); N <- $(n); scale_param <- $(scale); shape_param <- $(shape); HR_FP <- $(FP); OFILE <- "$@"; set.seed($*); source("$<")'
+
+simul3_cens_FP_ini_$(scale)_$(shape)_$(FP)_all_$(n)_$(nsim).RData : aux_unio.R $(DATA_SEED)
+	Rscript -e 'PATTERN <- "simul3_cens_FP_ini_$(scale)_$(shape)_$(FP)_%03d_$(n)_$(nsim).RData"; size <- $(size); OFILE <- "$@"; source("$<");'
+
+simul3_cens_FP_ini_$(scale)_$(shape)_$(FP)_10_$(n)_$(nsim).html : art_simul_scenari3_out_prova_ini.Rmd simul3_cens_FP_ini_$(scale)_$(shape)_$(FP)_all_$(n)_$(nsim).RData
+	Rscript -e 'load("simul3_cens_FP_ini_$(scale)_$(shape)_$(FP)_all_$(n)_$(nsim).RData"); Nsim <- $(nsim); N <- $(n); scale_param <- $(scale); shape_param <- $(shape); HR_FP <- $(FP); OUT <- "$@"; IN <- "$<"; source("$(RMD2HTML)")'

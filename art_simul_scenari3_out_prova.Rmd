@@ -1,0 +1,979 @@
+---
+title: "Simulation 3: FP as step function"
+author: "JBF"
+date: "11/1/2016"
+output: html_document
+---
+
+* Nsim = `r Nsim` of simulation runs
+* N = `r N` of women in each study
+
+Hypothesis:
+
+* Time up to pre-clinical Weibull
+* Sojourn time is an exponencial (0.25)
+* Time to enter is an Uniform(0, 15)
+* Time scale: years-50
+
+```{r, echo = F}
+options(width = 250)
+library(msm)
+library(dplyr)
+library(DT)
+library(ggplot2)
+source("~/PhD/aux_fun.R")
+aux_scale <- (1/scale_param)^shape_param
+exp_param <- 0.25
+msm_50_al <- lapply(msm_50, function(.mod) .mod$mod_al)
+msm_50_ob <- lapply(msm_50, function(.mod) .mod$mod_ob)
+msm_50_no <- lapply(msm_50, function(.mod) .mod$mod_no)
+msm_50_si <- lapply(msm_50, function(.mod) .mod$mod_si)
+msm_50_pci_al <- lapply(msm_50_pci, function(.mod) .mod$mod_al)
+msm_50_pci_ob <- lapply(msm_50_pci, function(.mod) .mod$mod_ob)
+msm_50_pci_no <- lapply(msm_50_pci, function(.mod) .mod$mod_no)
+msm_50_pci_si <- lapply(msm_50_pci, function(.mod) .mod$mod_si)
+msm_50_covar_al <- lapply(msm_50_covar, function(.mod) .mod$mod_al)
+msm_50_covar_ob <- lapply(msm_50_covar, function(.mod) .mod$mod_ob)
+msm_50_covar_no <- lapply(msm_50_covar, function(.mod) .mod$mod_no)
+msm_50_covar_si <- lapply(msm_50_covar, function(.mod) .mod$mod_si)
+msm_50_4_al <- lapply(msm_50_4, function(.mod) .mod$mod_al)
+msm_50_4_ob <- lapply(msm_50_4, function(.mod) .mod$mod_ob)
+msm_50_4_no <- lapply(msm_50_4, function(.mod) .mod$mod_no)
+msm_50_4_si <- lapply(msm_50_4, function(.mod) .mod$mod_si)
+msm_left_al <- lapply(msm_left, function(.mod) .mod$mod_al)
+msm_left_ob <- lapply(msm_left, function(.mod) .mod$mod_ob)
+msm_left_no <- lapply(msm_left, function(.mod) .mod$mod_no)
+msm_left_si <- lapply(msm_left, function(.mod) .mod$mod_si)
+msm_left_pci_al <- lapply(msm_left_pci, function(.mod) .mod$mod_al)
+msm_left_pci_ob <- lapply(msm_left_pci, function(.mod) .mod$mod_ob)
+msm_left_pci_no <- lapply(msm_left_pci, function(.mod) .mod$mod_no)
+msm_left_pci_si <- lapply(msm_left_pci, function(.mod) .mod$mod_si)
+msm_left_covar_al <- lapply(msm_left_covar, function(.mod) .mod$mod_al)
+msm_left_covar_ob <- lapply(msm_left_covar, function(.mod) .mod$mod_ob)
+msm_left_covar_no <- lapply(msm_left_covar, function(.mod) .mod$mod_no)
+msm_left_covar_si <- lapply(msm_left_covar, function(.mod) .mod$mod_si)
+msm_left_4_al <- lapply(msm_left_4, function(.mod) .mod$mod_al)
+msm_left_4_ob <- lapply(msm_left_4, function(.mod) .mod$mod_ob)
+msm_left_4_no <- lapply(msm_left_4, function(.mod) .mod$mod_no)
+msm_left_4_si <- lapply(msm_left_4, function(.mod) .mod$mod_si)
+msm_left_4_pci_al <- lapply(msm_left_4_pci, function(.mod) .mod$mod_al)
+msm_left_4_pci_ob <- lapply(msm_left_4_pci, function(.mod) .mod$mod_ob)
+msm_left_4_pci_no <- lapply(msm_left_4_pci, function(.mod) .mod$mod_no)
+msm_left_4_pci_si <- lapply(msm_left_4_pci, function(.mod) .mod$mod_si)
+msm_left_4_covar_al <- lapply(msm_left_4_covar, function(.mod) .mod$mod_al)
+msm_left_4_covar_ob <- lapply(msm_left_4_covar, function(.mod) .mod$mod_ob)
+msm_left_4_covar_no <- lapply(msm_left_4_covar, function(.mod) .mod$mod_no)
+msm_left_4_covar_si <- lapply(msm_left_4_covar, function(.mod) .mod$mod_si)
+cox_50_al <- lapply(cox_50, function(.mod) .mod$mod_al)
+cox_50_ob <- lapply(cox_50, function(.mod) .mod$mod_ob)
+cox_50_no <- lapply(cox_50, function(.mod) .mod$mod_no)
+cox_50_si <- lapply(cox_50, function(.mod) .mod$mod_si)
+cox_50_4_al <- lapply(cox_50_4, function(.mod) .mod$mod_al)
+cox_50_4_ob <- lapply(cox_50_4, function(.mod) .mod$mod_ob)
+cox_50_4_no <- lapply(cox_50_4, function(.mod) .mod$mod_no)
+cox_50_4_si <- lapply(cox_50_4, function(.mod) .mod$mod_si)
+cox_left_al <- lapply(cox_left, function(.mod) .mod$mod_al)
+cox_left_ob <- lapply(cox_left, function(.mod) .mod$mod_ob)
+cox_left_no <- lapply(cox_left, function(.mod) .mod$mod_no)
+cox_left_si <- lapply(cox_left, function(.mod) .mod$mod_si)
+cox_left_4_al <- lapply(cox_left_4, function(.mod) .mod$mod_al)
+cox_left_4_ob <- lapply(cox_left_4, function(.mod) .mod$mod_ob)
+cox_left_4_no <- lapply(cox_left_4, function(.mod) .mod$mod_no)
+cox_left_4_si <- lapply(cox_left_4, function(.mod) .mod$mod_si)
+disc_50_al <- lapply(disc_50, function(.mod) .mod$mod_al)
+disc_50_ob <- lapply(disc_50, function(.mod) .mod$mod_ob)
+disc_50_no <- lapply(disc_50, function(.mod) .mod$mod_no)
+disc_50_si <- lapply(disc_50, function(.mod) .mod$mod_si)
+disc_50_4_al <- lapply(disc_50_4, function(.mod) .mod$mod_al)
+disc_50_4_ob <- lapply(disc_50_4, function(.mod) .mod$mod_ob)
+disc_50_4_no <- lapply(disc_50_4, function(.mod) .mod$mod_no)
+disc_50_4_si <- lapply(disc_50_4, function(.mod) .mod$mod_si)
+disc_left_al <- lapply(disc_left, function(.mod) .mod$mod_al)
+disc_left_ob <- lapply(disc_left, function(.mod) .mod$mod_ob)
+disc_left_no <- lapply(disc_left, function(.mod) .mod$mod_no)
+disc_left_si <- lapply(disc_left, function(.mod) .mod$mod_si)
+disc_left_4_al <- lapply(disc_left_4, function(.mod) .mod$mod_al)
+disc_left_4_ob <- lapply(disc_left_4, function(.mod) .mod$mod_ob)
+disc_left_4_no <- lapply(disc_left_4, function(.mod) .mod$mod_no)
+disc_left_4_si <- lapply(disc_left_4, function(.mod) .mod$mod_si)
+```
+
+Parameters:
+
+* Shape parameter = `r shape_param`
+* Scale parameter = `r round(aux_scale, 6)`
+* HR(FP) = `r HR_FP`
+* Exponential = `r exp_param`
+
+## Outputs
+## Model 3 estats
+### Complet
+```{r, echo = F}
+t.com <- data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'no',
+                    print_qtrans(msm_50_al, 't1', 1, 2, aux_scale)) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2: HR(FP)', pci = 'no',
+                       print_HR(msm_50_al, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = '[-Inf, 5)',
+                       print_qtrans(msm_50_pci_al, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = '[05, 10)',
+                       print_qtrans(msm_50_pci_al, 't2', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = '[10, 15)',
+                       print_qtrans(msm_50_pci_al, 't3', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = '[15, Inf)',
+                       print_qtrans(msm_50_pci_al, 't4', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2: HR(FP)', pci = 'pci',
+                       print_HR(msm_50_pci_al, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'covar_[0,5)',
+                       print_qtrans_covar(msm_50_covar_al, '[0,5)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'covar_[5,10)',
+                       print_qtrans_covar(msm_50_covar_al, '[5,10)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'covar_[10,15)',
+                       print_qtrans_covar(msm_50_covar_al, '[10,15)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'covar_[15,25)',
+                       print_qtrans_covar(msm_50_covar_al, '[15,25)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2: HR(FP)', pci = 'covar',
+                       print_HR(msm_50_covar_al, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3', pci = 'no',
+                       print_qtrans(msm_50_al, 't1', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3: HR(FP)', pci = 'no',
+                       print_HR(msm_50_al, 2, 1))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3', pci = '[-Inf, 5)',
+                       print_qtrans(msm_50_pci_al, 't1', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3', pci = '[05, 10)',
+                       print_qtrans(msm_50_pci_al, 't2', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3', pci = '[10, 15)',
+                       print_qtrans(msm_50_pci_al, 't3', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3', pci = '[15, Inf)',
+                       print_qtrans(msm_50_pci_al, 't4', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3: HR(FP)', pci = 'pci',
+                       print_HR(msm_50_pci_al, 2, 1))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3', pci = 'covar_[0,5)',
+                       print_qtrans_covar(msm_50_covar_al, '[0,5)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3', pci = 'covar_[5,10)',
+                       print_qtrans_covar(msm_50_covar_al, '[5,10)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3', pci = 'covar_[10,15)',
+                       print_qtrans_covar(msm_50_covar_al, '[10,15)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3', pci = 'covar_[15,25)',
+                       print_qtrans_covar(msm_50_covar_al, '[15,25)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3: HR(FP)', pci = 'covar',
+                       print_HR(msm_50_covar_al, 2, 1))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'no',
+                       print_qtrans(msm_left_al, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'no',
+                       print_HR(msm_left_al, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = '[-Inf, 5)',
+                       print_qtrans(msm_left_pci_al, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = '[05, 10)',
+                       print_qtrans(msm_left_pci_al, 't2', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = '[10, 15)',
+                       print_qtrans(msm_left_pci_al, 't3', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = '[15, Inf)',
+                       print_qtrans(msm_left_pci_al, 't4', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'pci',
+                       print_HR(msm_left_pci_al, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[0,5)',
+                       print_qtrans_covar(msm_left_covar_al, '[0,5)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[5,10)',
+                       print_qtrans_covar(msm_left_covar_al, '[5,10)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[10,15)',
+                       print_qtrans_covar(msm_left_covar_al, '[10,15)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[15,25)',
+                       print_qtrans_covar(msm_left_covar_al, '[15,25)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'covar',
+                       print_HR(msm_left_covar_al, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3', pci = 'no',
+                       print_qtrans(msm_left_al, 't1', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3: HR(FP)', pci = 'no',
+                       print_HR(msm_left_al, 2, 1))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3', pci = '[-Inf, 5)',
+                       print_qtrans(msm_left_pci_al, 't1', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3', pci = '[05, 10)',
+                       print_qtrans(msm_left_pci_al, 't2', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3', pci = '[10, 15)',
+                       print_qtrans(msm_left_pci_al, 't3', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3', pci = '[15, Inf)',
+                       print_qtrans(msm_left_pci_al, 't4', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3: HR(FP)', pci = 'pci',
+                       print_HR(msm_left_pci_al, 2, 1))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3', pci = 'covar_[0,5)',
+                       print_qtrans_covar(msm_left_covar_al, '[0,5)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3', pci = 'covar_[5,10)',
+                       print_qtrans_covar(msm_left_covar_al, '[5,10)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3', pci = 'covar_[10,15)',
+                       print_qtrans_covar(msm_left_covar_al, '[10,15)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3', pci = 'covar_[15,25)',
+                       print_qtrans_covar(msm_left_covar_al, '[15,25)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3: HR(FP)', pci = 'covar',
+                       print_HR(msm_left_covar_al, 2, 1))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'No', est = '1 -> 2', pci = 'no',
+                       print_qtrans(msm_50_4_al, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'No', est = '1 -> 2: HR(FP)', pci = 'no',
+                       print_HR(msm_50_4_al, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'No', est = '2 -> 3', pci = 'no',
+                       print_qtrans(msm_50_4_al, 't1', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'No', est = '2 -> 3: HR(FP)', pci = 'no',
+                       print_HR(msm_50_4_al, 2, 1))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'no',
+                      print_qtrans(msm_left_4_al, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'no',
+                      print_HR(msm_left_4_al, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = '[-Inf, 5)',
+                      print_qtrans(msm_left_4_pci_al, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = '[05, 10)',
+                      print_qtrans(msm_left_4_pci_al, 't2', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = '[10, 15)',
+                      print_qtrans(msm_left_4_pci_al, 't3', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = '[15, Inf)',
+                      print_qtrans(msm_left_4_pci_al, 't4', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'pci',
+                       print_HR(msm_left_4_pci_al, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[0,5)',
+                       print_qtrans_covar(msm_left_4_covar_al, '[0,5)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[5,10)',
+                       print_qtrans_covar(msm_left_4_covar_al, '[5,10)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[10,15)',
+                       print_qtrans_covar(msm_left_4_covar_al, '[10,15)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[15,25)',
+                       print_qtrans_covar(msm_left_4_covar_al, '[15,25)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'covar',
+                       print_HR(msm_left_4_covar_al, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3', pci = 'no',
+                      print_qtrans(msm_left_4_al, 't1', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3: HR(FP)', pci = 'no',
+                       print_HR(msm_left_4_al, 2, 1))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3', pci = '[-Inf, 5)',
+                      print_qtrans(msm_left_4_pci_al, 't1', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3', pci = '[05, 10)',
+                      print_qtrans(msm_left_4_pci_al, 't2', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3', pci = '[10, 15)',
+                      print_qtrans(msm_left_4_pci_al, 't3', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3', pci = '[15, Inf)',
+                      print_qtrans(msm_left_4_pci_al, 't4', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3: HR(FP)', pci = 'pci',
+                       print_HR(msm_left_4_pci_al, 2, 1))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3', pci = 'covar_[0,5)',
+                       print_qtrans_covar(msm_left_4_covar_al, '[0,5)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3', pci = 'covar_[5,10)',
+                       print_qtrans_covar(msm_left_4_covar_al, '[5,10)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3', pci = 'covar_[10,15)',
+                       print_qtrans_covar(msm_left_4_covar_al, '[10,15)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3', pci = 'covar_[15,25)',
+                       print_qtrans_covar(msm_left_4_covar_al, '[15,25)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3: HR(FP)', pci = 'covar',
+                       print_HR(msm_left_4_covar_al, 2, 1)))
+
+t.com %>% filter(stringr::str_sub(est, start = -6, end = -1) != 'HR(FP)') %>%
+  select(left_trunc, est, N_crib, pci, bias:coverage) %>% 
+  arrange(left_trunc, est, desc(N_crib)) %>% datatable %>%
+  formatRound(c('bias_tp', 'coverage'), 2) %>% formatRound(c('bias', 'accuracy'), 4)
+
+t.com %>% filter(stringr::str_sub(est, start = -6, end = -1) == 'HR(FP)') %>%
+  select(left_trunc, est, N_crib, pci, bias:coverage) %>% 
+  arrange(left_trunc, est, desc(N_crib)) %>% datatable %>%
+  formatRound(c('bias_tp', 'coverage'), 2) %>% formatRound(c('bias', 'accuracy'), 4)
+
+pci_var <- c("[-Inf, 5)", "[05, 10)", "[10, 15)", "[15, Inf)")
+pci_covar <- c("covar_[0,5)", "covar_[5,10)", "covar_[10,15)", "covar_[15,25)")
+dgraf <- data.frame(times = 1:20,  ncrib = 10, left = F, pci = 'no',
+                    trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                    hazard = rep(c(subset(t.com, N_crib == 10 & left_trunc == 'No' &
+                                            est == '1 -> 2' & pci == 'no')$median,
+                                   subset(t.com, N_crib == 10 & left_trunc == 'No' &
+                                            est == '2 -> 3' & pci == 'no')$median),
+                                 each = 20)) %>%
+  bind_rows(data.frame(times = 1:20,  ncrib = 10, left = F, pci = 'pci',
+                       trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = rep(c(subset(t.com, N_crib == 10 & left_trunc == 'No' &
+                                               est == '1 -> 2' & pci %in% pci_var)$median,
+                                      subset(t.com, N_crib == 10 & left_trunc == 'No' &
+                                               est == '2 -> 3' & pci %in% pci_var)$median),
+                                    each = 5))) %>%
+  bind_rows(data.frame(times = 1:20,  ncrib = 10, left = F, pci = 'covar',
+                       trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = rep(c(subset(t.com, N_crib == 10 & left_trunc == 'No' &
+                                               est == '1 -> 2' & pci %in% pci_covar)$median,
+                                      subset(t.com, N_crib == 10 & left_trunc == 'No' &
+                                               est == '2 -> 3' & pci %in% pci_covar)$median),
+                                    each = 5))) %>%
+  bind_rows(data.frame(times = 1:20,  ncrib = 10, left = T, pci = 'no',
+                       trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = rep(c(subset(t.com, N_crib == 10 & left_trunc == 'Yes' &
+                                               est == '1 -> 2' & pci == 'no')$median,
+                                      subset(t.com, N_crib == 10 & left_trunc == 'Yes' &
+                                               est == '2 -> 3' & pci == 'no')$median),
+                                    each = 20))) %>%
+  bind_rows(data.frame(times = 1:20,  ncrib = 10, left = T, pci = 'pci',
+                       trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = rep(c(subset(t.com, N_crib == 10 & left_trunc == 'Yes' &
+                                               est == '1 -> 2' & pci %in% pci_var)$median,
+                                      subset(t.com, N_crib == 10 & left_trunc == 'Yes' &
+                                               est == '2 -> 3' & pci %in% pci_var)$median),
+                                    each = 5))) %>%
+  bind_rows(data.frame(times = 1:20,  ncrib = 10, left = T, pci = 'covar',
+                       trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = rep(c(subset(t.com, N_crib == 10 & left_trunc == 'Yes' &
+                                               est == '1 -> 2' & pci %in% pci_covar)$median,
+                                      subset(t.com, N_crib == 10 & left_trunc == 'Yes' &
+                                               est == '2 -> 3' & pci %in% pci_covar)$median),
+                                    each = 5))) %>%
+  bind_rows(data.frame(times = 1:20,  ncrib = 4, left = F, pci = 'no',
+                    trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                    hazard = rep(c(subset(t.com, N_crib == 4 & left_trunc == 'No' &
+                                            est == '1 -> 2' & pci == 'no')$median,
+                                   subset(t.com, N_crib == 4 & left_trunc == 'No' &
+                                            est == '2 -> 3' & pci == 'no')$median),
+                                 each = 20))) %>%
+  bind_rows(data.frame(times = 1:20,  ncrib = 4, left = T, pci = 'no',
+                       trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = rep(c(subset(t.com, N_crib == 4 & left_trunc == 'Yes' &
+                                               est == '1 -> 2' & pci == 'no')$median,
+                                      subset(t.com, N_crib == 4 & left_trunc == 'Yes' &
+                                               est == '2 -> 3' & pci == 'no')$median),
+                                    each = 20))) %>%
+  bind_rows(data.frame(times = 1:20,  ncrib = 4, left = T, pci = 'pci',
+                       trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = rep(c(subset(t.com, N_crib == 4 & left_trunc == 'Yes' &
+                                               est == '1 -> 2' & pci %in% pci_var)$median,
+                                      subset(t.com, N_crib == 4 & left_trunc == 'Yes' &
+                                               est == '2 -> 3' & pci %in% pci_var)$median),
+                                    each = 5))) %>%
+  bind_rows(data.frame(times = 1:20,  ncrib = 4, left = T, pci = 'covar',
+                       trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = rep(c(subset(t.com, N_crib == 4 & left_trunc == 'Yes' &
+                                               est == '1 -> 2' & pci %in% pci_covar)$median,
+                                      subset(t.com, N_crib == 4 & left_trunc == 'Yes' &
+                                               est == '2 -> 3' & pci %in% pci_covar)$median),
+                                    each = 5)))
+dgraf$ncrib <- as.factor(dgraf$ncrib)
+dtheoric <- data.frame(times = 1:20, left = F, trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = c((shape_param/scale_param)*(1:20/scale_param)^(shape_param - 1),
+                                  rep(exp_param, 20))) %>%
+  bind_rows(data.frame(times = 1:20, left = T, trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = c((shape_param/scale_param)*(1:20/scale_param)^(shape_param - 1),
+                                  rep(exp_param, 20))))
+                       
+ggplot() + geom_line(data = dgraf, aes(x = times, y = hazard, col = ncrib, lty = pci)) + 
+  geom_line(data = dtheoric, aes(x = times, y = hazard)) + 
+  facet_grid(trans ~ left, scales = "free")
+  
+```
+
+### Observat
+```{r, echo = F}
+t.obs <- data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'no',
+                    print_qtrans(msm_50_ob, 't1', 1, 2, aux_scale)) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2: HR(FP)', pci = 'no',
+                       print_HR(msm_50_ob, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = '[-Inf, 5)',
+                       print_qtrans(msm_50_pci_ob, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = '[05, 10)',
+                       print_qtrans(msm_50_pci_ob, 't2', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = '[10, 15)',
+                       print_qtrans(msm_50_pci_ob, 't3', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = '[15, Inf)',
+                       print_qtrans(msm_50_pci_ob, 't4', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2: HR(FP)', pci = 'pci',
+                       print_HR(msm_50_pci_ob, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'covar_[0,5)',
+                       print_qtrans_covar(msm_50_covar_ob, '[0,5)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'covar_[5,10)',
+                       print_qtrans_covar(msm_50_covar_ob, '[5,10)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'covar_[10,15)',
+                       print_qtrans_covar(msm_50_covar_ob, '[10,15)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'covar_[15,25)',
+                       print_qtrans_covar(msm_50_covar_ob, '[15,25)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2: HR(FP)', pci = 'covar',
+                       print_HR(msm_50_covar_ob, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3', pci = 'no',
+                       print_qtrans(msm_50_ob, 't1', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3: HR(FP)', pci = 'no',
+                       print_HR(msm_50_ob, 2, 1))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3', pci = '[-Inf, 5)',
+                       print_qtrans(msm_50_pci_ob, 't1', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3', pci = '[05, 10)',
+                       print_qtrans(msm_50_pci_ob, 't2', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3', pci = '[10, 15)',
+                       print_qtrans(msm_50_pci_ob, 't3', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3', pci = '[15, Inf)',
+                       print_qtrans(msm_50_pci_ob, 't4', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3: HR(FP)', pci = 'pci',
+                       print_HR(msm_50_pci_ob, 2, 1))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3', pci = 'covar_[0,5)',
+                       print_qtrans_covar(msm_50_covar_ob, '[0,5)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3', pci = 'covar_[5,10)',
+                       print_qtrans_covar(msm_50_covar_ob, '[5,10)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3', pci = 'covar_[10,15)',
+                       print_qtrans_covar(msm_50_covar_ob, '[10,15)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3', pci = 'covar_[15,25)',
+                       print_qtrans_covar(msm_50_covar_ob, '[15,25)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '2 -> 3: HR(FP)', pci = 'covar',
+                       print_HR(msm_50_covar_ob, 2, 1))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'no',
+                       print_qtrans(msm_left_ob, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'no',
+                       print_HR(msm_left_ob, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = '[-Inf, 5)',
+                       print_qtrans(msm_left_pci_ob, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = '[05, 10)',
+                       print_qtrans(msm_left_pci_ob, 't2', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = '[10, 15)',
+                       print_qtrans(msm_left_pci_ob, 't3', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = '[15, Inf)',
+                       print_qtrans(msm_left_pci_ob, 't4', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'pci',
+                       print_HR(msm_left_pci_ob, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[0,5)',
+                       print_qtrans_covar(msm_left_covar_ob, '[0,5)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[5,10)',
+                       print_qtrans_covar(msm_left_covar_ob, '[5,10)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[10,15)',
+                       print_qtrans_covar(msm_left_covar_ob, '[10,15)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[15,25)',
+                       print_qtrans_covar(msm_left_covar_ob, '[15,25)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'covar',
+                       print_HR(msm_left_covar_ob, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3', pci = 'no',
+                       print_qtrans(msm_left_ob, 't1', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3: HR(FP)', pci = 'no',
+                       print_HR(msm_left_ob, 2, 1))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3', pci = '[-Inf, 5)',
+                       print_qtrans(msm_left_pci_ob, 't1', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3', pci = '[05, 10)',
+                       print_qtrans(msm_left_pci_ob, 't2', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3', pci = '[10, 15)',
+                       print_qtrans(msm_left_pci_ob, 't3', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3', pci = '[15, Inf)',
+                       print_qtrans(msm_left_pci_ob, 't4', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3: HR(FP)', pci = 'pci',
+                       print_HR(msm_left_pci_ob, 2, 1))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3', pci = 'covar_[0,5)',
+                       print_qtrans_covar(msm_left_covar_ob, '[0,5)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3', pci = 'covar_[5,10)',
+                       print_qtrans_covar(msm_left_covar_ob, '[5,10)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3', pci = 'covar_[10,15)',
+                       print_qtrans_covar(msm_left_covar_ob, '[10,15)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3', pci = 'covar_[15,25)',
+                       print_qtrans_covar(msm_left_covar_ob, '[15,25)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '2 -> 3: HR(FP)', pci = 'covar',
+                       print_HR(msm_left_covar_ob, 2, 1))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'No', est = '1 -> 2', pci = 'no',
+                       print_qtrans(msm_50_4_ob, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'No', est = '1 -> 2: HR(FP)', pci = 'no',
+                       print_HR(msm_50_4_ob, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'No', est = '2 -> 3', pci = 'no',
+                       print_qtrans(msm_50_4_ob, 't1', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'No', est = '2 -> 3: HR(FP)', pci = 'no',
+                       print_HR(msm_50_4_ob, 2, 1))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'no',
+                      print_qtrans(msm_left_4_ob, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = '[-Inf, 5)',
+                      print_qtrans(msm_left_4_pci_ob, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = '[05, 10)',
+                      print_qtrans(msm_left_4_pci_ob, 't2', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = '[10, 15)',
+                      print_qtrans(msm_left_4_pci_ob, 't3', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = '[15, Inf)',
+                      print_qtrans(msm_left_4_pci_ob, 't4', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'pci',
+                       print_HR(msm_left_4_pci_ob, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[0,5)',
+                       print_qtrans_covar(msm_left_4_covar_ob, '[0,5)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[5,10)',
+                       print_qtrans_covar(msm_left_4_covar_ob, '[5,10)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[10,15)',
+                       print_qtrans_covar(msm_left_4_covar_ob, '[10,15)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[15,25)',
+                       print_qtrans_covar(msm_left_4_covar_ob, '[15,25)', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'covar',
+                       print_HR(msm_left_4_covar_ob, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3', pci = 'no',
+                      print_qtrans(msm_left_4_ob, 't1', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3: HR(FP)', pci = 'no',
+                       print_HR(msm_left_4_ob, 2, 1))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3', pci = '[-Inf, 5)',
+                      print_qtrans(msm_left_4_pci_ob, 't1', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3', pci = '[05, 10)',
+                      print_qtrans(msm_left_4_pci_ob, 't2', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3', pci = '[10, 15)',
+                      print_qtrans(msm_left_4_pci_ob, 't3', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3', pci = '[15, Inf)',
+                      print_qtrans(msm_left_4_pci_ob, 't4', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3: HR(FP)', pci = 'pci',
+                       print_HR(msm_left_4_pci_ob, 2, 1))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3', pci = 'covar_[0,5)',
+                       print_qtrans_covar(msm_left_4_covar_ob, '[0,5)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3', pci = 'covar_[5,10)',
+                       print_qtrans_covar(msm_left_4_covar_ob, '[5,10)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3', pci = 'covar_[10,15)',
+                       print_qtrans_covar(msm_left_4_covar_ob, '[10,15)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3', pci = 'covar_[15,25)',
+                       print_qtrans_covar(msm_left_4_covar_ob, '[15,25)', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '2 -> 3: HR(FP)', pci = 'covar',
+                       print_HR(msm_left_4_covar_ob, 2, 1)))
+
+t.obs %>% filter(stringr::str_sub(est, start = -6, end = -1) != 'HR(FP)') %>%
+  select(left_trunc, N_crib, est, pci, bias:coverage) %>% 
+  arrange(left_trunc, est, desc(N_crib)) %>% datatable %>%
+  formatRound(c('bias_tp', 'coverage'), 2) %>% formatRound(c('bias', 'accuracy'), 4)
+
+t.obs %>% filter(stringr::str_sub(est, start = -6, end = -1) == 'HR(FP)') %>%
+  select(left_trunc, est, N_crib, pci, bias:coverage) %>% 
+  arrange(left_trunc, est, desc(N_crib)) %>% datatable %>%
+  formatRound(c('bias_tp', 'coverage'), 2) %>% formatRound(c('bias', 'accuracy'), 4)
+
+dgraf <- data.frame(times = 1:20,  ncrib = 10, left = F, pci = 'no',
+                    trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                    hazard = rep(c(subset(t.obs, N_crib == 10 & left_trunc == 'No' &
+                                            est == '1 -> 2' & pci == 'no')$median,
+                                   subset(t.obs, N_crib == 10 & left_trunc == 'No' &
+                                            est == '2 -> 3' & pci == 'no')$median),
+                                 each = 20)) %>%
+  bind_rows(data.frame(times = 1:20,  ncrib = 10, left = F, pci = 'pci',
+                       trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = rep(c(subset(t.obs, N_crib == 10 & left_trunc == 'No' &
+                                               est == '1 -> 2' & pci %in% pci_var)$median,
+                                      subset(t.obs, N_crib == 10 & left_trunc == 'No' &
+                                               est == '2 -> 3' & pci %in% pci_var)$median),
+                                    each = 5))) %>%
+  bind_rows(data.frame(times = 1:20,  ncrib = 10, left = F, pci = 'covar',
+                       trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = rep(c(subset(t.obs, N_crib == 10 & left_trunc == 'No' &
+                                               est == '1 -> 2' & pci %in% pci_covar)$median,
+                                      subset(t.obs, N_crib == 10 & left_trunc == 'No' &
+                                               est == '2 -> 3' & pci %in% pci_covar)$median),
+                                    each = 5))) %>%
+  bind_rows(data.frame(times = 1:20,  ncrib = 10, left = T, pci = 'no',
+                       trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = rep(c(subset(t.obs, N_crib == 10 & left_trunc == 'Yes' &
+                                               est == '1 -> 2' & pci == 'no')$median,
+                                      subset(t.obs, N_crib == 10 & left_trunc == 'Yes' &
+                                               est == '2 -> 3' & pci == 'no')$median),
+                                    each = 20))) %>%
+  bind_rows(data.frame(times = 1:20,  ncrib = 10, left = T, pci = 'pci',
+                       trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = rep(c(subset(t.obs, N_crib == 10 & left_trunc == 'Yes' &
+                                               est == '1 -> 2' & pci %in% pci_var)$median,
+                                      subset(t.obs, N_crib == 10 & left_trunc == 'Yes' &
+                                               est == '2 -> 3' & pci %in% pci_var)$median),
+                                    each = 5))) %>%
+  bind_rows(data.frame(times = 1:20,  ncrib = 10, left = T, pci = 'covar',
+                       trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = rep(c(subset(t.obs, N_crib == 10 & left_trunc == 'Yes' &
+                                               est == '1 -> 2' & pci %in% pci_covar)$median,
+                                      subset(t.obs, N_crib == 10 & left_trunc == 'Yes' &
+                                               est == '2 -> 3' & pci %in% pci_covar)$median),
+                                    each = 5))) %>%
+  bind_rows(data.frame(times = 1:20,  ncrib = 4, left = F, pci = 'no',
+                    trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                    hazard = rep(c(subset(t.obs, N_crib == 4 & left_trunc == 'No' &
+                                            est == '1 -> 2' & pci == 'no')$median,
+                                   subset(t.obs, N_crib == 4 & left_trunc == 'No' &
+                                            est == '2 -> 3' & pci == 'no')$median),
+                                 each = 20))) %>%
+  bind_rows(data.frame(times = 1:20,  ncrib = 4, left = T, pci = 'no',
+                       trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = rep(c(subset(t.obs, N_crib == 4 & left_trunc == 'Yes' &
+                                               est == '1 -> 2' & pci == 'no')$median,
+                                      subset(t.obs, N_crib == 4 & left_trunc == 'Yes' &
+                                               est == '2 -> 3' & pci == 'no')$median),
+                                    each = 20))) %>%
+  bind_rows(data.frame(times = 1:20,  ncrib = 4, left = T, pci = 'pci',
+                       trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = rep(c(subset(t.obs, N_crib == 4 & left_trunc == 'Yes' &
+                                               est == '1 -> 2' & pci %in% pci_var)$median,
+                                      subset(t.obs, N_crib == 4 & left_trunc == 'Yes' &
+                                               est == '2 -> 3' & pci %in% pci_var)$median),
+                                    each = 5))) %>%
+  bind_rows(data.frame(times = 1:20,  ncrib = 4, left = T, pci = 'covar',
+                       trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = rep(c(subset(t.obs, N_crib == 4 & left_trunc == 'Yes' &
+                                               est == '1 -> 2' & pci %in% pci_covar)$median,
+                                      subset(t.obs, N_crib == 4 & left_trunc == 'Yes' &
+                                               est == '2 -> 3' & pci %in% pci_covar)$median),
+                                    each = 5)))
+dgraf$ncrib <- as.factor(dgraf$ncrib)
+dtheoric <- data.frame(times = 1:20, left = F, trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = c((shape_param/scale_param)*(1:20/scale_param)^(shape_param - 1),
+                                  rep(exp_param, 20))) %>%
+  bind_rows(data.frame(times = 1:20, left = T, trans = rep(c('1 -> 2', '2 -> 3'), each = 20),
+                       hazard = c((shape_param/scale_param)*(1:20/scale_param)^(shape_param - 1),
+                                  rep(exp_param, 20))))
+                       
+ggplot() + geom_line(data = dgraf, aes(x = times, y = hazard, col = ncrib, lty = pci)) + 
+  geom_line(data = dtheoric, aes(x = times, y = hazard)) + 
+  facet_grid(trans ~ left, scales = "free")
+```
+
+## 2-state model
+### Model with event as SCD or IC. Time up to IC.
+```{r, echo = F}
+t.no <- data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'no',
+                    print_qtrans(msm_50_no, 't1', 1, 2, aux_scale)) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2: HR(FP)', pci = 'no',
+                       print_HR(msm_50_no, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = '[-Inf, 5)',
+                       print_qtrans(msm_50_pci_no, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = '[05, 10)',
+                       print_qtrans(msm_50_pci_no, 't2', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = '[10, 15)',
+                       print_qtrans(msm_50_pci_no, 't3', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = '[15, Inf)',
+                       print_qtrans(msm_50_pci_no, 't4', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2: HR(FP)', pci = 'pci',
+                       print_HR(msm_50_pci_no, 1, HR_FP))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'covar_[0,5)',
+  #                      print_qtrans_covar(msm_50_covar_no, '[0,5)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'covar_[5,10)',
+  #                      print_qtrans_covar(msm_50_covar_no, '[5,10)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'covar_[10,15)',
+  #                      print_qtrans_covar(msm_50_covar_no, '[10,15)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'covar_[15,25)',
+  #                      print_qtrans_covar(msm_50_covar_no, '[15,25)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2: HR(FP)', pci = 'covar',
+  #                      print_HR(msm_50_covar_no, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'no',
+                       print_qtrans(msm_left_no, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'no',
+                       print_HR(msm_left_no, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = '[-Inf, 5)',
+                       print_qtrans(msm_left_pci_no, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = '[05, 10)',
+                       print_qtrans(msm_left_pci_no, 't2', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = '[10, 15)',
+                       print_qtrans(msm_left_pci_no, 't3', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = '[15, Inf)',
+                       print_qtrans(msm_left_pci_no, 't4', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'pci',
+                       print_HR(msm_left_pci_no, 1, HR_FP))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[0,5)',
+  #                      print_qtrans_covar(msm_left_covar_no, '[0,5)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[5,10)',
+  #                      print_qtrans_covar(msm_left_covar_no, '[5,10)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[10,15)',
+  #                      print_qtrans_covar(msm_left_covar_no, '[10,15)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[15,25)',
+  #                      print_qtrans_covar(msm_left_covar_no, '[15,25)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'covar',
+  #                      print_HR(msm_left_covar_no, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'No', est = '1 -> 2', pci = 'no',
+                       print_qtrans(msm_50_4_no, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'No', est = '1 -> 2: HR(FP)', pci = 'no',
+                       print_HR(msm_50_4_no, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'no',
+                      print_qtrans(msm_left_4_no, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'no',
+                      print_HR(msm_left_4_no, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = '[-Inf, 5)',
+                      print_qtrans(msm_left_4_pci_no, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = '[05, 10)',
+                      print_qtrans(msm_left_4_pci_no, 't2', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = '[10, 15)',
+                      print_qtrans(msm_left_4_pci_no, 't3', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = '[15, Inf)',
+                      print_qtrans(msm_left_4_pci_no, 't4', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'pci',
+                       print_HR(msm_left_4_pci_no, 1, HR_FP)))#%>%
+  # bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[0,5)',
+  #                      print_qtrans_covar(msm_left_4_covar_no, '[0,5)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[5,10)',
+  #                      print_qtrans_covar(msm_left_4_covar_no, '[5,10)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[10,15)',
+  #                      print_qtrans_covar(msm_left_4_covar_no, '[10,15)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[15,25)',
+  #                      print_qtrans_covar(msm_left_4_covar_no, '[15,25)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'covar',
+  #                      print_HR(msm_left_4_covar_no, 1, HR_FP)))
+
+t.no %>% filter(stringr::str_sub(est, start = -6, end = -1) != 'HR(FP)') %>%
+  select(left_trunc, N_crib, est, pci, bias:coverage) %>% 
+  arrange(left_trunc, est, desc(N_crib)) %>% datatable %>%
+  formatRound(c('bias_tp', 'coverage'), 2) %>% formatRound(c('bias', 'accuracy'), 4)
+
+t.no %>% filter(stringr::str_sub(est, start = -6, end = -1) == 'HR(FP)') %>%
+  select(left_trunc, est, N_crib, pci, bias:coverage) %>% 
+  arrange(left_trunc, est, desc(N_crib)) %>% datatable %>%
+  formatRound(c('bias_tp', 'coverage'), 2) %>% formatRound(c('bias', 'accuracy'), 4)
+```
+
+### Model with event as SCD or IC. Time up to next mamography.
+```{r, echo = F}
+t.si <- data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'no',
+                    print_qtrans(msm_50_si, 't1', 1, 2, aux_scale)) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2: HR(FP)', pci = 'no',
+                       print_HR(msm_50_si, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = '[-Inf, 5)',
+                       print_qtrans(msm_50_pci_si, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = '[05, 10)',
+                       print_qtrans(msm_50_pci_si, 't2', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = '[10, 15)',
+                       print_qtrans(msm_50_pci_si, 't3', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = '[15, Inf)',
+                       print_qtrans(msm_50_pci_si, 't4', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2: HR(FP)', pci = 'pci',
+                       print_HR(msm_50_pci_si, 1, HR_FP))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'covar_[0,5)',
+  #                      print_qtrans_covar(msm_50_covar_si, '[0,5)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'covar_[5,10)',
+  #                      print_qtrans_covar(msm_50_covar_si, '[5,10)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'covar_[10,15)',
+  #                      print_qtrans_covar(msm_50_covar_si, '[10,15)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2', pci = 'covar_[15,25)',
+  #                      print_qtrans_covar(msm_50_covar_si, '[15,25)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = '1 -> 2: HR(FP)', pci = 'covar',
+  #                      print_HR(msm_50_covar_si, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'no',
+                       print_qtrans(msm_left_si, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'no',
+                       print_HR(msm_left_si, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = '[-Inf, 5)',
+                       print_qtrans(msm_left_pci_si, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = '[05, 10)',
+                       print_qtrans(msm_left_pci_si, 't2', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = '[10, 15)',
+                       print_qtrans(msm_left_pci_si, 't3', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = '[15, Inf)',
+                       print_qtrans(msm_left_pci_si, 't4', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'pci',
+                       print_HR(msm_left_pci_si, 1, HR_FP))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[0,5)',
+  #                      print_qtrans_covar(msm_left_covar_si, '[0,5)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[5,10)',
+  #                      print_qtrans_covar(msm_left_covar_si, '[5,10)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[10,15)',
+  #                      print_qtrans_covar(msm_left_covar_si, '[10,15)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[15,25)',
+  #                      print_qtrans_covar(msm_left_covar_si, '[15,25)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'covar',
+  #                      print_HR(msm_left_covar_si, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'No', est = '1 -> 2', pci = 'no',
+                       print_qtrans(msm_50_4_si, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'No', est = '1 -> 2: HR(FP)', pci = 'no',
+                       print_HR(msm_50_4_si, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'no',
+                      print_qtrans(msm_left_4_si, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'no',
+                       print_HR(msm_left_4_si, 1, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = '[-Inf, 5)',
+                      print_qtrans(msm_left_4_pci_si, 't1', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = '[05, 10)',
+                      print_qtrans(msm_left_4_pci_si, 't2', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = '[10, 15)',
+                      print_qtrans(msm_left_4_pci_si, 't3', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = '[15, Inf)',
+                      print_qtrans(msm_left_4_pci_si, 't4', 1, 2, aux_scale))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'pci',
+                       print_HR(msm_left_4_pci_si, 1, HR_FP)))#%>%
+  # bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[0,5)',
+  #                      print_qtrans_covar(msm_left_4_covar_si, '[0,5)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[5,10)',
+  #                      print_qtrans_covar(msm_left_4_covar_si, '[5,10)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[10,15)',
+  #                      print_qtrans_covar(msm_left_4_covar_si, '[10,15)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2', pci = 'covar_[15,25)',
+  #                      print_qtrans_covar(msm_left_4_covar_si, '[15,25)', 1, 2, aux_scale))) %>%
+  # bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = '1 -> 2: HR(FP)', pci = 'covar',
+  #                      print_HR(msm_left_4_covar_si, 1, HR_FP)))
+
+t.si %>% filter(stringr::str_sub(est, start = -6, end = -1) != 'HR(FP)') %>%
+  select(left_trunc, N_crib, est, pci, bias:coverage) %>% 
+  arrange(left_trunc, est, desc(N_crib)) %>% datatable %>%
+  formatRound(c('bias_tp', 'coverage'), 2) %>% formatRound(c('bias', 'accuracy'), 4)
+
+t.si %>% filter(stringr::str_sub(est, start = -6, end = -1) == 'HR(FP)') %>%
+  select(left_trunc, est, N_crib, pci, bias:coverage) %>% 
+  arrange(left_trunc, est, desc(N_crib)) %>% datatable %>%
+  formatRound(c('bias_tp', 'coverage'), 2) %>% formatRound(c('bias', 'accuracy'), 4)
+```
+
+# Cox model
+## Causa-específic
+### Complet
+```{r,echo=F}
+t.ce_al <- data.frame(outcome = 'SCD', N_crib = 10, left_trunc = 'No', est = 'HR(FP)',
+                      print_cox(cox_50_al, 1, HR_FP)) %>%
+  bind_rows(data.frame(outcome = 'SCD', N_crib = 4, left_trunc = 'No', est = 'HR(FP)',
+                   print_cox(cox_50_4_al, 1, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'IC', N_crib = 10, left_trunc = 'No', est = 'HR(FP)',
+                   print_cox(cox_50_al, 2, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'IC', N_crib = 4, left_trunc = 'No', est = 'HR(FP)',
+                   print_cox(cox_50_4_al, 2, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'SCD', N_crib = 10, left_trunc = 'Yes', est = 'HR(FP)',
+                      print_cox(cox_left_al, 1, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'SCD', N_crib = 4, left_trunc = 'Yes', est = 'HR(FP)',
+                   print_cox(cox_left_4_al, 1, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'IC', N_crib = 10, left_trunc = 'Yes', est = 'HR(FP)',
+                   print_cox(cox_left_al, 2, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'IC', N_crib = 4, left_trunc = 'Yes', est = 'HR(FP)',
+                   print_cox(cox_left_4_al, 2, HR_FP)))
+
+t.ce_al %>%# filter(stringr::str_sub(est, start = -6, end = -1) == 'HR(FP)') %>%
+  select(left_trunc, outcome, N_crib, est, bias:coverage) %>% 
+  arrange(left_trunc, desc(outcome), est, desc(N_crib)) %>% datatable %>%
+  formatRound(c('bias_tp', 'coverage'), 2) %>% formatRound(c('bias', 'accuracy'), 4)
+```
+
+### Observed
+```{r,echo=F}
+t.ce_ob <- data.frame(outcome = 'SCD', N_crib = 10, left_trunc = 'No', est = 'HR(FP)',
+                      print_cox(cox_50_ob, 1, HR_FP)) %>%
+  bind_rows(data.frame(outcome = 'SCD', N_crib = 4, left_trunc = 'No', est = 'HR(FP)',
+                   print_cox(cox_50_4_ob, 1, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'IC', N_crib = 10, left_trunc = 'No', est = 'HR(FP)',
+                   print_cox(cox_50_ob, 2, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'IC', N_crib = 4, left_trunc = 'No', est = 'HR(FP)',
+                   print_cox(cox_50_4_ob, 2, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'SCD', N_crib = 10, left_trunc = 'Yes', est = 'HR(FP)',
+                      print_cox(cox_left_ob, 1, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'SCD', N_crib = 4, left_trunc = 'Yes', est = 'HR(FP)',
+                   print_cox(cox_left_4_ob, 1, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'IC', N_crib = 10, left_trunc = 'Yes', est = 'HR(FP)',
+                   print_cox(cox_left_ob, 2, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'IC', N_crib = 4, left_trunc = 'Yes', est = 'HR(FP)',
+                   print_cox(cox_left_4_ob, 2, HR_FP)))
+
+t.ce_ob %>%# filter(stringr::str_sub(est, start = -6, end = -1) == 'HR(FP)') %>%
+  select(left_trunc, outcome, N_crib, est, bias:coverage) %>% 
+  arrange(left_trunc, desc(outcome), est, desc(N_crib)) %>% datatable %>%
+  formatRound(c('bias_tp', 'coverage'), 2) %>% formatRound(c('bias', 'accuracy'), 4)
+```
+
+## 2-state model
+### Model with event as SCD or IC. Time up to IC.
+```{r, echo = F}
+t.no <- data.frame(N_crib = 10, left_trunc = 'No', est = 'HR(FP)',
+                       print_cox(cox_50_no, NULL, HR_FP)) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = 'HR(FP)',
+                       print_cox(cox_left_no, NULL, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'No', est = 'HR(FP)',
+                       print_cox(cox_50_4_no, NULL, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = 'HR(FP)',
+                       print_cox(cox_left_4_no, NULL, HR_FP)))
+
+# t.no %>% #filter(stringr::str_sub(est, start = -6, end = -1) != 'HR(FP)') %>%
+#   select(left_trunc, N_crib, est, mean:p975) %>% 
+#   arrange(left_trunc, est, desc(N_crib)) %>% datatable %>%
+#   formatRound(c('mean', 'median', 'p25', 'p975'), 4)
+
+t.no %>%# filter(stringr::str_sub(est, start = -6, end = -1) == 'HR(FP)') %>%
+  select(left_trunc, N_crib, est, bias:coverage) %>% 
+  arrange(left_trunc, est, desc(N_crib)) %>% datatable %>%
+  formatRound(c('bias_tp', 'coverage'), 2) %>% formatRound(c('bias', 'accuracy'), 4)
+```
+
+### Model with event as SCD or IC. Time up to next mamography.
+```{r, echo = F}
+t.si <- data.frame(N_crib = 10, left_trunc = 'No', est = 'HR(FP)',
+                   print_cox(cox_50_si, NULL, HR_FP)) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = 'HR(FP)',
+                       print_cox(cox_left_si, NULL, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'No', est = 'HR(FP)',
+                       print_cox(cox_50_4_si, NULL, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = 'HR(FP)',
+                       print_cox(cox_left_4_si, NULL, HR_FP)))
+
+# t.si %>% #filter(stringr::str_sub(est, start = -6, end = -1) != 'HR(FP)') %>%
+#   select(left_trunc, N_crib, est, mean:p975) %>% 
+#   arrange(left_trunc, est, desc(N_crib)) %>% datatable %>%
+#   formatRound(c('mean', 'median', 'p25', 'p975'), 4)
+
+t.si %>%# filter(stringr::str_sub(est, start = -6, end = -1) == 'HR(FP)') %>%
+  select(left_trunc, N_crib, est, bias:coverage) %>% 
+  arrange(left_trunc, est, desc(N_crib)) %>% datatable %>%
+  formatRound(c('bias_tp', 'coverage'), 2) %>% formatRound(c('bias', 'accuracy'), 4)
+```
+
+# Discret-time model
+## Complet
+```{r,echo=F}
+t.disc_al <- data.frame(outcome = 'SCD', N_crib = 10, left_trunc = 'No', est = 'HR(FP)',
+                        print_disc(disc_50_al, 1, HR_FP)) %>%
+  bind_rows(data.frame(outcome = 'SCD', N_crib = 4, left_trunc = 'No', est = 'HR(FP)',
+                   print_disc(disc_50_4_al, 1, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'IC', N_crib = 10, left_trunc = 'No', est = 'HR(FP)',
+                   print_disc(disc_50_al, 2, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'IC', N_crib = 4, left_trunc = 'No', est = 'HR(FP)',
+                   print_disc(disc_50_4_al, 2, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'SCD', N_crib = 10, left_trunc = 'Yes', est = 'HR(FP)',
+                      print_disc(disc_left_al, 1, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'SCD', N_crib = 4, left_trunc = 'Yes', est = 'HR(FP)',
+                   print_disc(disc_left_4_al, 1, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'IC', N_crib = 10, left_trunc = 'Yes', est = 'HR(FP)',
+                   print_disc(disc_left_al, 2, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'IC', N_crib = 4, left_trunc = 'Yes', est = 'HR(FP)',
+                   print_disc(disc_left_4_al, 2, HR_FP)))
+
+t.disc_al %>%# filter(stringr::str_sub(est, start = -6, end = -1) == 'HR(FP)') %>%
+  select(left_trunc, outcome, N_crib, est, bias:coverage) %>% 
+  arrange(left_trunc, desc(outcome), est, desc(N_crib)) %>% datatable %>%
+  formatRound(c('bias_tp', 'coverage'), 2) %>% formatRound(c('bias', 'accuracy'), 4)
+```
+
+## Observed
+```{r,echo=F}
+t.disc_ob <- data.frame(outcome = 'SCD', N_crib = 10, left_trunc = 'No', est = 'HR(FP)',
+                        print_disc(disc_50_ob, 1, HR_FP)) %>%
+  bind_rows(data.frame(outcome = 'SCD', N_crib = 4, left_trunc = 'No', est = 'HR(FP)',
+                   print_disc(disc_50_4_ob, 1, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'IC', N_crib = 10, left_trunc = 'No', est = 'HR(FP)',
+                   print_disc(disc_50_ob, 2, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'IC', N_crib = 4, left_trunc = 'No', est = 'HR(FP)',
+                   print_disc(disc_50_4_ob, 2, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'SCD', N_crib = 10, left_trunc = 'Yes', est = 'HR(FP)',
+                      print_disc(disc_left_ob, 1, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'SCD', N_crib = 4, left_trunc = 'Yes', est = 'HR(FP)',
+                   print_disc(disc_left_4_ob, 1, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'IC', N_crib = 10, left_trunc = 'Yes', est = 'HR(FP)',
+                   print_disc(disc_left_ob, 2, HR_FP))) %>%
+  bind_rows(data.frame(outcome = 'IC', N_crib = 4, left_trunc = 'Yes', est = 'HR(FP)',
+                   print_disc(disc_left_4_ob, 2, HR_FP)))
+
+t.disc_ob %>%# filter(stringr::str_sub(est, start = -6, end = -1) == 'HR(FP)') %>%
+  select(left_trunc, outcome, N_crib, est, bias:coverage) %>% 
+  arrange(left_trunc, desc(outcome), est, desc(N_crib)) %>% datatable %>%
+  formatRound(c('bias_tp', 'coverage'), 2) %>% formatRound(c('bias', 'accuracy'), 4)
+```
+
+## 2-state model
+### Model with event as SCD or IC. Time up to IC.
+```{r, echo = F}
+t.no <- data.frame(N_crib = 10, left_trunc = 'No', est = 'HR(FP)',
+                       print_disc(disc_50_no, NULL, HR_FP)) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = 'HR(FP)',
+                       print_disc(disc_left_no, NULL, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'No', est = 'HR(FP)',
+                       print_disc(disc_50_4_no, NULL, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = 'HR(FP)',
+                       print_disc(disc_left_4_no, NULL, HR_FP)))
+
+# t.no %>% #filter(stringr::str_sub(est, start = -6, end = -1) != 'HR(FP)') %>%
+#   select(left_trunc, N_crib, est, mean:p975) %>% 
+#   arrange(left_trunc, est, desc(N_crib)) %>% datatable %>%
+#   formatRound(c('mean', 'median', 'p25', 'p975'), 4)
+
+t.no %>%# filter(stringr::str_sub(est, start = -6, end = -1) == 'HR(FP)') %>%
+  select(left_trunc, N_crib, est, bias:coverage) %>% 
+  arrange(left_trunc, est, desc(N_crib)) %>% datatable %>%
+  formatRound(c('bias_tp', 'coverage'), 2) %>% formatRound(c('bias', 'accuracy'), 4)
+```
+
+### Model with event as SCD or IC. Time up to next mamography.
+```{r, echo = F}
+t.si <- data.frame(N_crib = 10, left_trunc = 'No', est = 'HR(FP)',
+                   print_disc(disc_50_si, NULL, HR_FP)) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'Yes', est = 'HR(FP)',
+                       print_disc(disc_left_si, NULL, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'No', est = 'HR(FP)',
+                       print_disc(disc_50_4_si, NULL, HR_FP))) %>%
+  bind_rows(data.frame(N_crib = 4, left_trunc = 'Yes', est = 'HR(FP)',
+                       print_disc(disc_left_4_si, NULL, HR_FP)))
+
+# t.si %>% #filter(stringr::str_sub(est, start = -6, end = -1) != 'HR(FP)') %>%
+#   select(left_trunc, N_crib, est, mean:p975) %>% 
+#   arrange(left_trunc, est, desc(N_crib)) %>% datatable %>%
+#   formatRound(c('mean', 'median', 'p25', 'p975'), 4)
+
+t.si %>%# filter(stringr::str_sub(est, start = -6, end = -1) == 'HR(FP)') %>%
+  select(left_trunc, N_crib, est, bias:coverage) %>% 
+  arrange(left_trunc, est, desc(N_crib)) %>% datatable %>%
+  formatRound(c('bias_tp', 'coverage'), 2) %>% formatRound(c('bias', 'accuracy'), 4)
+```
