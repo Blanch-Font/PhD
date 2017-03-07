@@ -203,54 +203,38 @@ modify_data <- function(.data, left = F){
 
 # MSM models
 model_msm_noFP <- function(.data, pci = T){
-  # 3 state model
+  # 3-state models
   # Modify state to satisfy MSM assumptions
   .data_msm <- .data %>% group_by(id) %>% mutate(event_un = state_un + 1, event = state + 1)
-  qmat <- rbind(c(0.95, 0.05, 0), c(0, 0.2, 0.8), c(0, 0, 0))
-  # with all data
-  # mod_al <- suppressWarnings(msm(event_un ~ time, id, .data_msm, qmatrix = qmat, deathexact = 3, 
-  #                                pci = c(5, 10, 15), 
-  #                                control = list(fnscale = 100, reltol = 1e-7)))
-  if (pci){
-    mod_al <- msm(formula = event_un ~ time, subject = id, data = .data_msm, qmatrix = qmat,
-                  deathexact = 3, pci = c(5, 10, 15), 
-                  control = list(fnscale = 100, reltol = 1e-7))
-  } else{
-    mod_al <- msm(formula = event_un ~ time, subject = id, data = .data_msm, qmatrix = qmat,
-                  deathexact = 3, control = list(fnscale = 100, reltol = 1e-7))
-  }
-  # hiding some information
-  # mod_ob <- suppressWarnings(msm(event ~ time, id, .data_msm %>% filter(select),
-  #                                qmatrix = qmat, deathexact = 3, pci = c(5, 10, 15),
-  #                                control = list(fnscale = 100, reltol = 1e-7)))
-  if (pci){
-    mod_ob <- msm(formula = event ~ time, subject = id, data = .data_msm %>% filter(select),
-                  qmatrix = qmat, deathexact = 3, pci = c(5, 10, 15),
-                  control = list(fnscale = 100, reltol = 1e-7))
-  } else{
-    mod_ob <- msm(formula = event ~ time, subject = id, data = .data_msm %>% filter(select),
-                  qmatrix = qmat, deathexact = 3, control = list(fnscale = 100, reltol = 1e-7))
-  }
+  qmat3 <- rbind(c(0.9, 0.1, 0), c(0, 0.6, 0.4), c(0, 0, 0))
   # 2-state model
-  .data_no <- .data %>% filter(select) %>% mutate(event = as.numeric(state > 0) + 1)
-  qmat <- rbind(c(0.9, 0.1), c(0, 0))
   # model without extending the observation of IC
-  if (pci){
-    mod_no <- msm(formula = event ~ time, subject = id, data = .data_no, qmatrix = qmat,
-                  pci = c(5, 10, 15), deathexact = 2)
-  } else{
-    mod_no <- msm(formula = event ~ time, subject = id, data = .data_no, qmatrix = qmat,
-                  deathexact = 2)
-  }
+  .data_no <- .data %>% filter(select) %>% mutate(event = as.numeric(state > 0) + 1)
+  qmat2 <- rbind(c(0.9, 0.1), c(0, 0))
   # model with extending the observation of IC
   # new time for IC corresponding the last visit + 2 yr
-  .data_si <- .data %>% filter(select) %>% group_by(id) %>% 
+  .data_si <- .data %>% filter(select) %>%
     mutate(time = ifelse(state == 2, lag(time) + 2, time), event = as.numeric(state > 0) + 1)
   if (pci){
-    mod_si <- msm(formula = event ~ time, subject = id, data = .data_si, qmatrix = qmat,
-                  pci = c(5, 10, 15), deathexact = 2)
+    mod_al <- msm(formula = event_un ~ time, subject = id, data = .data_msm, qmatrix = qmat3,
+                  deathexact = 3, # covinits = list(FP = c(log(HR_FP), 0)),
+                  pci = c(4, 8, 12, 16), fixedpars = c(4, 6, 8, 10),
+                  control = list(fnscale = 100, reltol = 1e-7))
+    mod_ob <- msm(formula = event ~ time, subject = id, data = .data_msm %>% filter(select),
+                  qmatrix = qmat3, deathexact = 3, pci = c(4, 8, 12, 16),
+                  fixedpars = c(4, 6, 8, 10), control = list(fnscale = 100, reltol = 1e-7))
+    mod_no <- msm(formula = event ~ time, subject = id, data = .data_no, qmatrix = qmat2,
+                  pci = c(4, 8, 12, 16), deathexact = 2)
+    mod_si <- msm(formula = event ~ time, subject = id, data = .data_si, qmatrix = qmat2,
+                  pci = c(4, 8, 12, 16), deathexact = 2)
   } else{
-    mod_si <- msm(formula = event ~ time, subject = id, data = .data_si, qmatrix = qmat,
+    mod_al <- msm(formula = event_un ~ time, subject = id, data = .data_msm, qmatrix = qmat3,
+                  deathexact = 3, control = list(fnscale = 100, reltol = 1e-7))
+    mod_ob <- msm(formula = event ~ time, subject = id, data = .data_msm %>% filter(select),
+                  qmatrix = qmat3, deathexact = 3, control = list(fnscale = 100, reltol = 1e-7))
+    mod_no <- msm(formula = event ~ time, subject = id, data = .data_no, qmatrix = qmat2,
+                  deathexact = 2)
+    mod_si <- msm(formula = event ~ time, subject = id, data = .data_si, qmatrix = qmat2,
                   deathexact = 2)
   }
   # Results:
@@ -258,40 +242,48 @@ model_msm_noFP <- function(.data, pci = T){
   #  - qtrans: transition intensity matrix for each period
   list(mod_al = list(HZ = hazard.msm(mod_al),
                      qtrans = list(t1 = qmatrix.msm(mod_al,
-                                                    covariates = list(timeperiod = "[-Inf,5)")),
+                                                    covariates = list(timeperiod = "[-Inf,4)")),
                                    t2 = qmatrix.msm(mod_al,
-                                                    covariates = list(timeperiod = "[5,10)")),
+                                                    covariates = list(timeperiod = "[4,8)")),
                                    t3 = qmatrix.msm(mod_al,
-                                                    covariates = list(timeperiod = "[10,15)")),
+                                                    covariates = list(timeperiod = "[8,12)")),
                                    t4 = qmatrix.msm(mod_al,
-                                                    covariates = list(timeperiod = "[15,Inf)")))),
+                                                    covariates = list(timeperiod = "[12,16)")),
+                                   t5 = qmatrix.msm(mod_al,
+                                                    covariates = list(timeperiod = "[16,Inf)")))),
        mod_ob = list(HZ = hazard.msm(mod_ob),
                      qtrans = list(t1 = qmatrix.msm(mod_ob,
-                                                    covariates = list(timeperiod = "[-Inf,5)")),
+                                                    covariates = list(timeperiod = "[-Inf,4)")),
                                    t2 = qmatrix.msm(mod_ob,
-                                                    covariates = list(timeperiod = "[5,10)")),
+                                                    covariates = list(timeperiod = "[4,8)")),
                                    t3 = qmatrix.msm(mod_ob,
-                                                    covariates = list(timeperiod = "[10,15)")),
+                                                    covariates = list(timeperiod = "[8,12)")),
                                    t4 = qmatrix.msm(mod_ob,
-                                                    covariates = list(timeperiod = "[15,Inf)")))),
+                                                    covariates = list(timeperiod = "[12,16)")),
+                                   t5 = qmatrix.msm(mod_ob,
+                                                    covariates = list(timeperiod = "[16,Inf)")))),
        mod_no = list(HZ = hazard.msm(mod_no),
                      qtrans = list(t1 = qmatrix.msm(mod_no,
-                                                    covariates = list(timeperiod = "[-Inf,5)")),
+                                                    covariates = list(timeperiod = "[-Inf,4)")),
                                    t2 = qmatrix.msm(mod_no,
-                                                    covariates = list(timeperiod = "[5,10)")),
+                                                    covariates = list(timeperiod = "[4,8)")),
                                    t3 = qmatrix.msm(mod_no,
-                                                    covariates = list(timeperiod = "[10,15)")),
+                                                    covariates = list(timeperiod = "[8,12)")),
                                    t4 = qmatrix.msm(mod_no,
-                                                    covariates = list(timeperiod = "[15,Inf)")))),
+                                                    covariates = list(timeperiod = "[12,16)")),
+                                   t5 = qmatrix.msm(mod_no,
+                                                    covariates = list(timeperiod = "[16,Inf)")))),
        mod_si = list(HZ = hazard.msm(mod_si),
                      qtrans = list(t1 = qmatrix.msm(mod_si,
-                                                    covariates = list(timeperiod = "[-Inf,5)")),
+                                                    covariates = list(timeperiod = "[-Inf,4)")),
                                    t2 = qmatrix.msm(mod_si,
-                                                    covariates = list(timeperiod = "[5,10)")),
+                                                    covariates = list(timeperiod = "[4,8)")),
                                    t3 = qmatrix.msm(mod_si,
-                                                    covariates = list(timeperiod = "[10,15)")),
+                                                    covariates = list(timeperiod = "[8,12)")),
                                    t4 = qmatrix.msm(mod_si,
-                                                    covariates = list(timeperiod = "[15,Inf)")))))
+                                                    covariates = list(timeperiod = "[12,16)")),
+                                   t5 = qmatrix.msm(mod_si,
+                                                    covariates = list(timeperiod = "[16,Inf)")))))
 }
 # MSM model
 model_msm <- function(.data, pci = T, covar = F){

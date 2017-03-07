@@ -31,31 +31,12 @@ for (.nsim in 1:Nsim){
   rm(my.Data)
   
   ## MSM model
-  msm_50[[.nsim]] <- model_msm_ini(my.Data_50)
-  msm_left[[.nsim]] <- model_msm_ini(my.Data_left)
-  msm_50_4[[.nsim]] <- model_msm_ini(my.Data_50 %>% filter(N_crib <= 4), pci = F)
-  msm_left_4[[.nsim]] <- model_msm_ini(my.Data_left %>% filter(N_crib <= 4))
-  ## Cox models
-  cox_50[[.nsim]] <- model_cox(my.Data_50)
-  cox_left[[.nsim]] <- model_cox(my.Data_left)
-  cox_50_4[[.nsim]] <- model_cox(my.Data_50 %>% filter(N_crib <= 4))
-  cox_left_4[[.nsim]] <- model_cox(my.Data_left %>% filter(N_crib <= 4))
-  ## Discret models
-  disc_50[[.nsim]] <- model_discret(my.Data_50)
-  disc_left[[.nsim]] <- model_discret(my.Data_left)
-  disc_50_4[[.nsim]] <- model_discret(my.Data_50 %>% filter(N_crib <= 4))
-  disc_left_4[[.nsim]] <- model_discret(my.Data_left %>% filter(N_crib <= 4))
+  msm_50[[.nsim]] <- model_msm_noFP(my.Data_50)
   
   if (.nsim %in% seq(0, Nsim - 1, 5)){
-    save(msm_50, msm_left, cox_50, cox_left,
-         msm_50_4, msm_left_4, cox_50_4, cox_left_4,
-         disc_50, disc_left, disc_50_4, disc_left_4,
-         file = paste0('temp.',OFILE))
+    save(msm_50, file = paste0('temp.',OFILE))
   }
-  rm(my.Data_50, my.Data_left)
+  rm(my.Data_50)
   gc(reset = T)
 }
-save(msm_50, msm_left, cox_50, cox_left,
-     msm_50_4, msm_left_4, cox_50_4, cox_left_4,
-     disc_50, disc_left, disc_50_4, disc_left_4,
-     file = OFILE)
+save(msm_50, file = OFILE)
