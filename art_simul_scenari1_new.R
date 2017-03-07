@@ -8,6 +8,7 @@ source("aux_fun.R")
 # Parameters
 aux_scale <- (1/scale_param)^shape_param
 Fup <- 10 # maximum number of visits
+HR_FP <- 1
 
 msm_50 <- list() # list of MSM models without left-truncation
 for (.nsim in 1:Nsim){
