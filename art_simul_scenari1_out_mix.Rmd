@@ -1,0 +1,167 @@
+---
+title: "Simulation 1: new"
+author: "JBF"
+date: "11/1/2016"
+output: html_document
+---
+
+```{r, echo = F}
+options(width = 250)
+library(gridExtra)
+library(msm)
+library(dplyr)
+library(DT)
+library(ggplot2)
+source("~/PhD/aux_fun.R")
+```
+
+* Nsim = `r length(msm_50_al)` of simulation runs
+* N = `r N` of women in each study
+
+Hypothesis:
+
+* Time up to pre-clinical Weibull
+* Sojourn time is an exponencial (0.25)
+* Time to enter is an Uniform(0, 15)
+* Time scale: years-50
+
+Parameters:
+
+* Shape parameter = `r shape_param`
+* Scale parameter = `r round(aux_scale, 6)`
+* Exponential = `r exp_param`
+
+## Outputs
+## Model 3 estats
+### Complet
+```{r, echo = F}
+aux_scale <- (1/scale_param)^shape_param
+exp_param <- 0.25
+msm_50_al <- lapply(msm_50, function(.mod) .mod$mod_al)
+msm_50_ob <- lapply(msm_50, function(.mod) .mod$mod_ob)
+msm_50_no <- lapply(msm_50, function(.mod) .mod$mod_no)
+msm_50_si <- lapply(msm_50, function(.mod) .mod$mod_si)
+
+pt_tall <- c(2, 6, 10, 14, 18)
+trans12 <- (shape_param/scale_param)*(pt_tall/scale_param)^(shape_param - 1)
+t.com <- data.frame(N_crib = 10, left_trunc = 'No', est = 'S0 -> Sp', pci = '[-Inf, 4)',
+                    print_qtrans(msm_50_al, 't1', 1, 2, trans12[1])) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = 'S0 -> Sp', pci = '[04, 08)',
+                    print_qtrans(msm_50_al, 't2', 1, 2, trans12[2]))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = 'S0 -> Sp', pci = '[08, 12)',
+                    print_qtrans(msm_50_al, 't3', 1, 2, trans12[3]))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = 'S0 -> Sp', pci = '[12, 16)',
+                    print_qtrans(msm_50_al, 't4', 1, 2, trans12[4]))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = 'S0 -> Sp', pci = '[16, Inf)',
+                    print_qtrans(msm_50_al, 't5', 1, 2, trans12[5]))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = 'Sp -> Sc', pci = '[-Inf, 4)',
+                       print_qtrans(msm_50_al, 't1', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = 'Sp -> Sc', pci = '[04, 08)',
+                       print_qtrans(msm_50_al, 't2', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = 'Sp -> Sc', pci = '[08, 12)',
+                       print_qtrans(msm_50_al, 't3', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = 'Sp -> Sc', pci = '[12, 16)',
+                       print_qtrans(msm_50_al, 't4', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = 'Sp -> Sc', pci = '[16, Inf)',
+                       print_qtrans(msm_50_al, 't5', 2, 3, exp_param)))
+
+t.com %>% filter(stringr::str_sub(est, start = -6, end = -1) != 'HR(FP)') %>%
+  select(left_trunc, N_crib, est, pci, bias:coverage) %>% 
+  arrange(left_trunc, est, desc(N_crib)) %>% datatable %>%
+  formatRound(c('bias_tp', 'coverage'), 2) %>% formatRound(c('bias', 'accuracy'), 4)
+
+dgraf <- data.frame(Age = c(seq(51, 70, 0.1), rep(51:70, 3)),
+                    Transition = c(rep('Theoretical', 191), rep(10, 20),
+                                   rep('Theoretical', 20), rep(10, 20)),
+                    Left = c(rep('Theoretical', 191), rep('No', 20),
+                             rep('Theoretical', 20), rep('No', 20)),
+                    trans = rep(c('S0 -> Sp', 'Sp -> Sc'), c(211, 40)),
+                    hazard = c((shape_param/scale_param)*(seq(1, 20, 0.1)/
+                                                            scale_param)^(shape_param - 1),
+                               rep(t.com$median[1:5], c(3:4, 4, 4:5)),
+                               rep(exp_param, 20),
+                               rep(t.com$median[6:10], c(3:4, 4, 4:5))))
+dgraf$Transition <- relevel(dgraf$Transition, ref = 'Theoretical')
+dgraf$Left <- relevel(dgraf$Left, ref = 'Theoretical')
+# ggplot(dgraf, aes(x = Age, y = hazard, col = Transition, lty = Left)) + geom_step() + 
+#   facet_grid(trans ~ ., scales = "free")
+grid.arrange(ggplot(dgraf %>% filter(trans == 'S0 -> Sp'),
+                    aes(x = Age, y = hazard, lty = Left, color = Transition)) + geom_step() +
+               ylim(0, 0.0021) + labs(y = 'Transition rate S0 -> Sp') +
+               theme(legend.position = "none"),
+             ggplot(dgraf %>% filter(trans == 'Sp -> Sc'),
+                    aes(x = Age, y = hazard, lty = Left, color = Transition)) + geom_step() +
+               ylim(0, 0.3) + labs(lty = 'Truncation', y = 'Transition rate Sp -> Sc'),
+             nrow = 1)
+tiff(filename = "fig_1.tiff", width = 20, height = 15, units = 'cm', res = 300)
+grid.arrange(ggplot(dgraf %>% filter(trans == 'S0 -> Sp', Transition != 4),
+                    aes(x = Age, y = hazard, lty = Left)) + geom_step() + ylim(0, 0.0021) +
+               labs(y = 'Transition rate S0 -> Sp') + theme(legend.position = "none"),
+             ggplot(dgraf %>% filter(trans == 'Sp -> Sc', Transition != 4),
+                    aes(x = Age, y = hazard, lty = Left)) + geom_step() + ylim(0, 0.3) +
+               labs(lty = 'Late Entry', y = 'Transition rate Sp -> Sc'),
+             nrow = 1)
+dev.off()
+```
+
+### Observat
+```{r, echo = F}
+t.obs <- data.frame(N_crib = 10, left_trunc = 'No', est = 'S0 -> Sp', pci = '[-Inf, 4)',
+                    print_qtrans(msm_50_ob, 't1', 1, 2, trans12[1])) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = 'S0 -> Sp', pci = '[04, 08)',
+                    print_qtrans(msm_50_ob, 't2', 1, 2, trans12[2]))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = 'S0 -> Sp', pci = '[08, 12)',
+                    print_qtrans(msm_50_ob, 't3', 1, 2, trans12[3]))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = 'S0 -> Sp', pci = '[12, 16)',
+                    print_qtrans(msm_50_ob, 't4', 1, 2, trans12[4]))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = 'S0 -> Sp', pci = '[16, Inf)',
+                    print_qtrans(msm_50_ob, 't5', 1, 2, trans12[5]))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = 'Sp -> Sc', pci = '[-Inf, 4)',
+                       print_qtrans(msm_50_ob, 't1', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = 'Sp -> Sc', pci = '[04, 08)',
+                       print_qtrans(msm_50_ob, 't2', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = 'Sp -> Sc', pci = '[08, 12)',
+                       print_qtrans(msm_50_ob, 't3', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = 'Sp -> Sc', pci = '[12, 16)',
+                       print_qtrans(msm_50_ob, 't4', 2, 3, exp_param))) %>%
+  bind_rows(data.frame(N_crib = 10, left_trunc = 'No', est = 'Sp -> Sc', pci = '[16, Inf)',
+                       print_qtrans(msm_50_ob, 't4', 2, 3, exp_param)))
+
+t.obs %>% filter(stringr::str_sub(est, start = -6, end = -1) != 'HR(FP)') %>%
+  select(left_trunc, N_crib, est, pci, bias:coverage) %>% 
+  arrange(left_trunc, est, desc(N_crib)) %>% datatable %>%
+  formatRound(c('bias_tp', 'coverage'), 2) %>% formatRound(c('bias', 'accuracy'), 4)
+
+dgraf <- data.frame(Age = c(seq(1, 20, 0.1), rep(1:20, 3)), 
+                    Transition = c(rep('Theoretical', 191), rep(10, 20),
+                                   rep('Theoretical', 20), rep(10, 20)),
+                    Left = c(rep('Theoretical', 191), rep('No', 20),
+                             rep('Theoretical', 20), rep('No', 20)),
+                    trans = rep(c('S0 -> Sp', 'Sp -> Sc'), c(211, 40)),
+                    hazard = c((shape_param/scale_param)*(seq(1, 20, 0.1)/
+                                                            scale_param)^(shape_param - 1),
+                               rep(t.obs$median[1:5], c(3:4, 4, 4:5)),
+                               rep(exp_param, 20),
+                               rep(t.obs$median[6:10], c(3:4, 4, 4:5))))
+dgraf$Transition <- relevel(dgraf$Transition, ref = 'Theoretical')
+dgraf$Left <- relevel(dgraf$Left, ref = 'Theoretical')
+# ggplot(dgraf, aes(x = Age, y = hazard, col = Transition, lty = Left)) + geom_step() + 
+#   facet_grid(trans ~ ., scales = "free")
+grid.arrange(ggplot(dgraf %>% filter(trans == 'S0 -> Sp'),
+                    aes(x = Age, y = hazard, lty = Left, color = Transition)) +
+               geom_step() + ylim(0, 0.0021) + labs(y = 'Transition rate S0 -> Sp') +
+               theme(legend.position = "none"),
+             ggplot(dgraf %>% filter(trans == 'Sp -> Sc'),
+                    aes(x = Age, y = hazard, lty = Left, color = Transition)) + geom_step() +
+               ylim(0, 0.3) + labs(lty = 'Truncation', y = 'Transition rate Sp -> Sc'),
+             nrow = 1)
+tiff(filename = "fig_2.tiff", width = 20, height = 15, units = 'cm', res = 300)
+grid.arrange(ggplot(dgraf %>% filter(trans == 'S0 -> Sp', Transition != 4),
+                    aes(x = Age, y = hazard, lty = Left)) + geom_step() + ylim(0, 0.0021) +
+               labs(y = 'Transition rate S0 -> Sp') + theme(legend.position = "none"),
+             ggplot(dgraf %>% filter(trans == 'Sp -> Sc', Transition != 4),
+                    aes(x = Age, y = hazard, lty = Left)) + geom_step() + ylim(0, 0.3) +
+               labs(lty = 'Late Entry', y = 'Transition rate Sp -> Sc'),
+             nrow = 1)
+dev.off()
+```
