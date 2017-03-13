@@ -217,8 +217,7 @@ model_msm_noFP <- function(.data, pci = T){
     mutate(time = ifelse(state == 2, lag(time) + 2, time), event = as.numeric(state > 0) + 1)
   if (pci){
     mod_al <- msm(formula = event_un ~ time, subject = id, data = .data_msm, qmatrix = qmat3,
-                  deathexact = 3, # covinits = list(FP = c(log(HR_FP), 0)),
-                  pci = c(4, 8, 12, 16), fixedpars = c(4, 6, 8, 10),
+                  deathexact = 3, pci = c(4, 8, 12, 16), fixedpars = c(4, 6, 8, 10),
                   control = list(fnscale = 100, reltol = 1e-7))
     mod_ob <- msm(formula = event ~ time, subject = id, data = .data_msm %>% filter(select),
                   qmatrix = qmat3, deathexact = 3, pci = c(4, 8, 12, 16),
