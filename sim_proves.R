@@ -95,13 +95,36 @@ for (i in 1:Nsim){
                c(0,   -0.55, 0.55),
                c(0,    0,   0) )
   # Q.crude <- crudeinits.msm(state ~ time, subject=id, data=my.Data, qmatrix=Q)
-  mod1.com <- msm(state ~ time, subject = id, data = my.Data, qmatrix = Q, obstype = obs_type,
-                  method = "BFGS", control = list(fnscale = 10000, maxit = 10000))
-  # sojourn.msm(mod1.com)
-  mod1.obs <- msm(state ~ time, subject = id, data = subset(my.Data, observat), qmatrix = Q,
-                  obstype = obs_type, method = "BFGS",
-                  control = list(fnscale = 10000, maxit = 10000))
-  # sojourn.msm(mod1.com)
+  if (pci){
+    if (fixed_pci){
+      mod1.com <- msm(formula = state ~ time, subject = id, data = my.Data, qmatrix = Q,
+                      obstype = obs_type, pci = pci = c(4, 8, 12, 16), fixedpars = c(4, 6, 8, 10),
+                      method = "BFGS", control = list(fnscale = 10000, maxit = 10000))
+      # sojourn.msm(mod1.com)
+      mod1.obs <- msm(formula = state ~ time, subject = id, data = subset(my.Data, observat),
+                      qmatrix = Q, obstype = obs_type, pci = c(4, 8, 12, 16),
+                      fixedpars = c(4, 6, 8, 10),
+                      method = "BFGS", control = list(fnscale = 10000, maxit = 10000))
+      # sojourn.msm(mod1.com)
+    } else{
+      mod1.com <- msm(formula = state ~ time, subject = id, data = my.Data, qmatrix = Q,
+                      obstype = obs_type, pci = pci = c(4, 8, 12, 16),
+                      method = "BFGS", control = list(fnscale = 10000, maxit = 10000))
+      # sojourn.msm(mod1.com)
+      mod1.obs <- msm(formula = state ~ time, subject = id, data = subset(my.Data, observat),
+                      qmatrix = Q, obstype = obs_type, pci = c(4, 8, 12, 16),
+                      method = "BFGS", control = list(fnscale = 10000, maxit = 10000))
+      # sojourn.msm(mod1.com)
+    }
+  } else{
+    mod1.com <- msm(state ~ time, subject = id, data = my.Data, qmatrix = Q, obstype = obs_type,
+                    method = "BFGS", control = list(fnscale = 10000, maxit = 10000))
+    # sojourn.msm(mod1.com)
+    mod1.obs <- msm(state ~ time, subject = id, data = subset(my.Data, observat), qmatrix = Q,
+                    obstype = obs_type, method = "BFGS",
+                    control = list(fnscale = 10000, maxit = 10000))
+    # sojourn.msm(mod1.com)
+  }
   
   res_com[i, ] <- mod1.com$estimates.t #results calculations
   res_obs[i, ] <- mod1.obs$estimates.t #results calculations
