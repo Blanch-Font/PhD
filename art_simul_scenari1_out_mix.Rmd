@@ -13,6 +13,14 @@ library(dplyr)
 library(DT)
 library(ggplot2)
 source("~/PhD/aux_fun.R")
+
+aux_scale <- (1/scale_param)^shape_param
+exp_param <- 0.25
+
+msm_50_al <- lapply(msm_50, function(.mod) .mod$mod_al)
+msm_50_ob <- lapply(msm_50, function(.mod) .mod$mod_ob)
+msm_50_no <- lapply(msm_50, function(.mod) .mod$mod_no)
+msm_50_si <- lapply(msm_50, function(.mod) .mod$mod_si)
 ```
 
 * Nsim = `r length(msm_50_al)` of simulation runs
@@ -35,13 +43,6 @@ Parameters:
 ## Model 3 estats
 ### Complet
 ```{r, echo = F}
-aux_scale <- (1/scale_param)^shape_param
-exp_param <- 0.25
-msm_50_al <- lapply(msm_50, function(.mod) .mod$mod_al)
-msm_50_ob <- lapply(msm_50, function(.mod) .mod$mod_ob)
-msm_50_no <- lapply(msm_50, function(.mod) .mod$mod_no)
-msm_50_si <- lapply(msm_50, function(.mod) .mod$mod_si)
-
 pt_tall <- c(2, 6, 10, 14, 18)
 trans12 <- (shape_param/scale_param)*(pt_tall/scale_param)^(shape_param - 1)
 t.com <- data.frame(N_crib = 10, left_trunc = 'No', est = 'S0 -> Sp', pci = '[-Inf, 4)',
