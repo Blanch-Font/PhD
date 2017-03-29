@@ -59,13 +59,15 @@ for (i in 1:Nsim){
   ## in order to see how estimates perform if follow-up continued after screen detected cancer
   my.Data <- subset(my.Data, time <= (Tclin+2))
   
+  ## by choosing time > Tpre+2, the interval cancers have select=1
+  my.Data$observat <- with(my.Data, time <= (Tpre + 2))
+  
   ## adjust time in last row if it refers to clinical cancer
   sel_clin <- my.Data$state == 2
   my.Data$time[sel_clin] <- my.Data$Tclin[sel_clin]
   my.Data$obs_type[sel_clin] <- 3
   
-  ## by choosing time > Tpre+2, the interval cancers have select=1
-  my.Data$observat <- with(my.Data, time <= (Tpre + 2))
+  #Cut time at 20 years
   my.Data <- subset(my.Data, time <= 20)
   
   amy.Data <- my.Data
