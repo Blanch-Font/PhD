@@ -70,14 +70,16 @@ for (i in 1:Nsim){
   
   amy.Data <- my.Data
   
-  ## afegim la observació CC
-  my.Data_CC <- subset(my.Data, N_crib == 1 & Tpre < 20)
-  my.Data_CC$obs_type <- 3
-  my.Data_CC$time <- my.Data_CC$Tpre
-  my.Data_CC$state <- 1
-  my.Data_CC$observat <- F
-  my.Data <- rbind(my.Data, my.Data_CC)
-  my.Data <- my.Data[order(my.Data$id, my.Data$time),]
+  if (afegir_CC){
+    ## afegim la observació CC
+    my.Data_CC <- subset(my.Data, N_crib == 1 & Tpre < 20)
+    my.Data_CC$obs_type <- 3
+    my.Data_CC$time <- my.Data_CC$Tpre
+    my.Data_CC$state <- 1
+    my.Data_CC$observat <- F
+    my.Data <- rbind(my.Data, my.Data_CC)
+    my.Data <- my.Data[order(my.Data$id, my.Data$time),]
+  }
   
   # ## check whether data are ok
   # ## show first couple of individuals that left initial state
@@ -95,7 +97,7 @@ for (i in 1:Nsim){
   Q <- rbind ( c(-0.004, 0.004, 0), 
                c(0,   -0.55, 0.55),
                c(0,    0,   0) )
-  # Q.crude <- crudeinits.msm(state ~ time, subject=id, data=my.Data, qmatrix=Q)
+  # Q.crude <- crudeinits.msm(state ~ time, subject = id, data = my.Data, qmatrix = Q)
   if (pci){
     if (fixed_pci){
       mod1.com <- msm(formula = state ~ time, subject = id, data = my.Data, qmatrix = Q,
