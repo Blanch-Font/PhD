@@ -1,3 +1,4 @@
+#Afegir sensibilitat 85%
 library(msm)
 
 #Nsim <- 500 # number of simulation runs
@@ -13,8 +14,8 @@ exp2_param <- 1/4 #paràmetre exponencial
 
 #msm_50 <- list() # list of MSM models without left-truncation
 
-res_com <- matrix(NA, nrow = Nsim, ncol = 2) # if 2 parameters are estimated
-res_obs <- matrix(NA, nrow = Nsim, ncol = 2) # if 2 parameters are estimated
+res_com <- list()
+res_obs <- list()
 
 # set.seed(n_seed[.nsim])
 for (i in 1:Nsim){
@@ -98,7 +99,7 @@ for (i in 1:Nsim){
   if (pci){
     if (fixed_pci){
       mod1.com <- msm(formula = state ~ time, subject = id, data = my.Data, qmatrix = Q,
-                      obstype = obs_type, pci = pci = c(4, 8, 12, 16), fixedpars = c(4, 6, 8, 10),
+                      obstype = obs_type, pci = c(4, 8, 12, 16), fixedpars = c(4, 6, 8, 10),
                       method = "BFGS", control = list(fnscale = 10000, maxit = 10000))
       # sojourn.msm(mod1.com)
       mod1.obs <- msm(formula = state ~ time, subject = id, data = subset(my.Data, observat),
@@ -108,7 +109,7 @@ for (i in 1:Nsim){
       # sojourn.msm(mod1.com)
     } else{
       mod1.com <- msm(formula = state ~ time, subject = id, data = my.Data, qmatrix = Q,
-                      obstype = obs_type, pci = pci = c(4, 8, 12, 16),
+                      obstype = obs_type, pci = c(4, 8, 12, 16),
                       method = "BFGS", control = list(fnscale = 10000, maxit = 10000))
       # sojourn.msm(mod1.com)
       mod1.obs <- msm(formula = state ~ time, subject = id, data = subset(my.Data, observat),
@@ -126,8 +127,8 @@ for (i in 1:Nsim){
     # sojourn.msm(mod1.com)
   }
   
-  res_com[i, ] <- mod1.com$estimates.t #results calculations
-  res_obs[i, ] <- mod1.obs$estimates.t #results calculations
+  res_com[[i]] <- mod1.com$estimates.t #results calculations
+  res_obs[[i]] <- mod1.obs$estimates.t #results calculations
 }
 
-save(results, file = OUT_FILE)
+save(res_com, res_obs, file = OUT_FILE)
