@@ -2,11 +2,39 @@
 library(dplyr)
 library(msm)
 
-FP_creation <- function(.data, ncrib, data_ant, prob_fp){
+# FP_creation <- function(.data, ncrib, data_ant, prob_fp){
+#   adata <- subset(.data, N_crib == ncrib)
+#   adata$FP_1 <- data_ant$FP_1 # keep the previous FP
+#   sel_FP <- adata$FP_1 == 0
+#   adata$FP_1[sel_FP] <- rbinom(sum(sel_FP), 1, prob_fp)
+#   adata
+# }
+# FP_cens_creation <- function(.data, ncrib, data_ant, prob_cens, prob_fp){
+#   adata <- subset(.data, N_crib == ncrib)
+#   adata$cens <- data_ant$cens # keep censoring from last observation
+#   adata$FP_1 <- data_ant$FP_1 # keep the previous FP
+#   adata$cens[adata$cens == 0] <- rbinom(N - sum(data_ant$cens), 1, prob_cens) 
+#   adata$FP_1[adata$FP_1 == 0 & adata$cens == 0] <- 
+#     with(adata, rbinom(sum(FP_1 == 0 & cens == 0), 1, prob_fp))
+#   adata
+# }
+FP_cens_creation <- function(.data, ncrib, data_ant, prob_cens, prob_fp){
   adata <- subset(.data, N_crib == ncrib)
+  adata$cens <- data_ant$cens # keep the previous censoring
   adata$FP_1 <- data_ant$FP_1 # keep the previous FP
-  sel_FP <- adata$FP_1 == 0
-  adata$FP_1[sel_FP] <- rbinom(sum(sel_FP), 1, prob_fp)
+  if (length(prob_cens) == 1){
+    adata$cens[adata$cens == 0] <- rbinom(N - sum(data_ant$cens), 1, prob_cens)
+  } else {
+    # Censoring for woman without FP
+    adata$cens[adata$cens == 0 & adata$FP_1 == 0] <-
+      with(adata, rbinom(sum(cens == 0 & FP_1 == 0), 1, prob_cens[1]))
+    # Censoring for woman with FP
+    adata$cens[adata$cens == 0 & adata$FP_1 == 1] <-
+      with(adata, rbinom(sum(cens == 0 & FP_1 == 1), 1, prob_cens[2]))
+  }
+  # first FP
+  adata$FP_1[adata$FP_1 == 0 & adata$cens == 0] <-
+    with(adata, rbinom(sum(FP_1 == 0 & cens == 0), 1, prob_fp))
   adata
 }
 
@@ -58,16 +86,17 @@ for (i in 1:Nsim){
   if(fp_simul){
     # Creation of time-depending FP as step function
     my.Data_1 <- subset(my.Data, N_crib == 1)
+    my.Data_1$cens <- 0 # No censoring in the first observation
     my.Data_1$FP_1 <- rbinom(N, 1, prob_fp_1) # probability from roman et al
-    my.Data_2 <- FP_creation(my.Data, 2, my.Data_1, prob_fp_2)
-    my.Data_3 <- FP_creation(my.Data, 3, my.Data_2, prob_fp_3)
-    my.Data_4 <- FP_creation(my.Data, 4, my.Data_3, prob_fp_4)
-    my.Data_5 <- FP_creation(my.Data, 5, my.Data_4, prob_fp_5)
-    my.Data_6 <- FP_creation(my.Data, 6, my.Data_5, prob_fp_5)
-    my.Data_7 <- FP_creation(my.Data, 7, my.Data_6, prob_fp_5)
-    my.Data_8 <- FP_creation(my.Data, 8, my.Data_7, prob_fp_5)
-    my.Data_9 <- FP_creation(my.Data, 9, my.Data_8, prob_fp_5)
-    my.Data_10 <- FP_creation(my.Data, 10, my.Data_9, prob_fp_5)
+    my.Data_2 <- FP_cens_creation(my.Data, 2, my.Data_1, prob_cens2, prob_fp_2)
+    my.Data_3 <- FP_cens_creation(my.Data, 3, my.Data_2, prob_cens3, prob_fp_3)
+    my.Data_4 <- FP_cens_creation(my.Data, 4, my.Data_3, prob_cens4, prob_fp_4)
+    my.Data_5 <- FP_cens_creation(my.Data, 5, my.Data_4, prob_cens5, prob_fp_5)
+    my.Data_6 <- FP_cens_creation(my.Data, 6, my.Data_5, prob_cens6, prob_fp_5)
+    my.Data_7 <- FP_cens_creation(my.Data, 7, my.Data_6, prob_cens7, prob_fp_5)
+    my.Data_8 <- FP_cens_creation(my.Data, 8, my.Data_7, prob_cens7, prob_fp_5)
+    my.Data_9 <- FP_cens_creation(my.Data, 9, my.Data_8, prob_cens7, prob_fp_5)
+    my.Data_10 <- FP_cens_creation(my.Data, 10, my.Data_9, prob_cens7, prob_fp_5)
     my.Data <- rbind(my.Data_1, my.Data_2, my.Data_3, my.Data_4, my.Data_5, my.Data_6, my.Data_7,
                      my.Data_8, my.Data_9, my.Data_10)
     rm(my.Data_1, my.Data_2, my.Data_3, my.Data_4, my.Data_5, my.Data_6, my.Data_7, my.Data_8,
@@ -186,28 +215,15 @@ for (i in 1:Nsim){
                         method = "BFGS", control = list(fnscale = 10000, maxit = 10000))
         # sojourn.msm(mod1.com)
       } else{
-        if(fp_simul){
-          mod1.com <- msm(formula = state_un ~ time, subject = id, data = my.Data, qmatrix = Q,
-                          obstype = obs_type, covariates = ~ FP, pci = c(4, 8, 12, 16),
-                          fixedpars = c(4, 6, 8, 10),
-                          method = "BFGS", control = list(fnscale = 10000, maxit = 10000))
-          # sojourn.msm(mod1.com)
-          mod1.obs <- msm(formula = state ~ time, subject = id, data = subset(my.Data, observat),
-                          qmatrix = Q, obstype = obs_type, covariates = ~ FP,
-                          pci = c(4, 8, 12, 16), fixedpars = c(4, 6, 8, 10),
-                          method = "BFGS", control = list(fnscale = 10000, maxit = 10000))
-          # sojourn.msm(mod1.com)
-        } else{
-          mod1.com <- msm(formula = state_un ~ time, subject = id, data = my.Data, qmatrix = Q,
-                          obstype = obs_type, pci = c(4, 8, 12, 16), fixedpars = c(4, 6, 8, 10),
-                          method = "BFGS", control = list(fnscale = 10000, maxit = 10000))
-          # sojourn.msm(mod1.com)
-          mod1.obs <- msm(formula = state ~ time, subject = id, data = subset(my.Data, observat),
-                          qmatrix = Q, obstype = obs_type, pci = c(4, 8, 12, 16),
-                          fixedpars = c(4, 6, 8, 10),
-                          method = "BFGS", control = list(fnscale = 10000, maxit = 10000))
-          # sojourn.msm(mod1.com)
-        }
+        mod1.com <- msm(formula = state_un ~ time, subject = id, data = my.Data, qmatrix = Q,
+                        obstype = obs_type, pci = c(4, 8, 12, 16), fixedpars = c(4, 6, 8, 10),
+                        method = "BFGS", control = list(fnscale = 10000, maxit = 10000))
+        # sojourn.msm(mod1.com)
+        mod1.obs <- msm(formula = state ~ time, subject = id, data = subset(my.Data, observat),
+                        qmatrix = Q, obstype = obs_type, pci = c(4, 8, 12, 16),
+                        fixedpars = c(4, 6, 8, 10),
+                        method = "BFGS", control = list(fnscale = 10000, maxit = 10000))
+        # sojourn.msm(mod1.com)
       }
     } else{
       if(fp_simul){
@@ -230,13 +246,25 @@ for (i in 1:Nsim){
       }
     }
   } else{
-    mod1.com <- msm(state_un ~ time, subject = id, data = my.Data, qmatrix = Q, obstype = obs_type,
-                    method = "BFGS", control = list(fnscale = 10000, maxit = 10000))
-    # sojourn.msm(mod1.com)
-    mod1.obs <- msm(state ~ time, subject = id, data = subset(my.Data, observat), qmatrix = Q,
-                    obstype = obs_type, method = "BFGS",
-                    control = list(fnscale = 10000, maxit = 10000))
-    # sojourn.msm(mod1.com)
+    if(fp_simul){
+      mod1.com <- msm(formula = state_un ~ time, subject = id, data = my.Data, qmatrix = Q,
+                      obstype = obs_type, covariates = ~ FP,
+                      method = "BFGS", control = list(fnscale = 10000, maxit = 10000))
+      # sojourn.msm(mod1.com)
+      mod1.obs <- msm(formula = state ~ time, subject = id, data = subset(my.Data, observat),
+                      qmatrix = Q, obstype = obs_type, covariates = ~ FP,
+                      method = "BFGS", control = list(fnscale = 10000, maxit = 10000))
+      # sojourn.msm(mod1.com)
+    } else{
+      mod1.com <- msm(state_un ~ time, subject = id, data = my.Data, qmatrix = Q,
+                      obstype = obs_type, method = "BFGS",
+                      control = list(fnscale = 10000, maxit = 10000))
+      # sojourn.msm(mod1.com)
+      mod1.obs <- msm(state ~ time, subject = id, data = subset(my.Data, observat), qmatrix = Q,
+                      obstype = obs_type, method = "BFGS",
+                      control = list(fnscale = 10000, maxit = 10000))
+      # sojourn.msm(mod1.com)
+    }
   }
   
   res_com[[i]] <- mod1.com$estimates.t #results calculations
