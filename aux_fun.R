@@ -379,12 +379,17 @@ model_msm <- function(.data, pci = T, covar = F){
 model_msm_ini <- function(.data, pci = TRUE){
   # 3-state models
   # Modify state to satisfy MSM assumptions
-  .data_msm <- .data %>% group_by(id) %>% mutate(event_un = state_un + 1, event = state + 1)
-  qmat3 <- rbind(c(0.9, 0.1, 0), c(0, 0.6, 0.4), c(0, 0, 0))
+  .data_msm <- .data
+  .data_msm$event_un = .data_msm$state_un + 1
+  .data_msm$event = .data_msm$state + 1
+  qmat3 <- rbind ( c(-0.004, 0.004, 0), 
+                   c(0,   -0.55, 0.55),
+                   c(0,    0,   0) )
   # 2-state model
   # model without extending the observation of IC
   .data_no <- .data %>% filter(select) %>% mutate(event = as.numeric(state > 0) + 1)
-  qmat2 <- rbind(c(0.9, 0.1), c(0, 0))
+  qmat2 <- rbind(c(0.9, 0.1),
+                 c(0, 0))
   # model with extending the observation of IC
   # new time for IC corresponding the last visit + 2 yr
   .data_si <- .data %>% filter(select) %>%
@@ -393,30 +398,26 @@ model_msm_ini <- function(.data, pci = TRUE){
   # with all data
   if (pci){
     mod_al <- msm(formula = event_un ~ time, subject = id, data = .data_msm, qmatrix = qmat3,
-                  deathexact = 3, covariates = ~ FP,# covinits = list(FP = c(log(HR_FP), 0)),
-                  pci = c(4, 8, 12, 16), fixedpars = c(6, 8, 10, 12),
-                  control = list(fnscale = 100, reltol = 1e-7))
+                  obstype = obs_type, covariates = ~ FP, pci = c(4, 8, 12, 16),
+                  fixedpars = c(6, 8, 10, 12), control = list(fnscale = 100, reltol = 1e-7))
     mod_ob <- msm(formula = event ~ time, subject = id, data = .data_msm %>% filter(select),
-                  qmatrix = qmat3, deathexact = 3, covariates = ~ FP,
-                  pci = c(4, 8, 12, 16),# covinits = list(FP = c(log(HR_FP), 0)),
+                  qmatrix = qmat3, obstype = obs_type, covariates = ~ FP, pci = c(4, 8, 12, 16),
                   fixedpars = c(6, 8, 10, 12), control = list(fnscale = 100, reltol = 1e-7))
     mod_no <- msm(formula = event ~ time, subject = id, data = .data_no, qmatrix = qmat2,
-                  covariates = ~ FP, #covinits = list(FP = log(HR_FP)),
-                  pci = c(4, 8, 12, 16), deathexact = 2)
+                  obstype = obs_type, covariates = ~ FP, pci = c(4, 8, 12, 16))
     mod_si <- msm(formula = event ~ time, subject = id, data = .data_si, qmatrix = qmat2,
-                  covariates = ~ FP,# covinits = list(FP = log(HR_FP)),
-                  pci = c(4, 8, 12, 16), deathexact = 2)
+                  obstype = obs_type, covariates = ~ FP, pci = c(4, 8, 12, 16))
   } else{
     mod_al <- msm(formula = event_un ~ time, subject = id, data = .data_msm, qmatrix = qmat3,
-                  deathexact = 3, covariates = ~ FP, 
+                  obstype = obs_type, covariates = ~ FP,
                   control = list(fnscale = 100, reltol = 1e-7))
     mod_ob <- msm(formula = event ~ time, subject = id, data = .data_msm %>% filter(select),
-                  qmatrix = qmat3, deathexact = 3, covariates = ~ FP,
+                  qmatrix = qmat3, obstype = obs_type, covariates = ~ FP,
                   control = list(fnscale = 100, reltol = 1e-7))
     mod_no <- msm(formula = event ~ time, subject = id, data = .data_no, qmatrix = qmat2,
-                  covariates = ~ FP, deathexact = 2)
+                  obstype = obs_type, covariates = ~ FP)
     mod_si <- msm(formula = event ~ time, subject = id, data = .data_si, qmatrix = qmat2,
-                  covariates = ~ FP, deathexact = 2)
+                  covariates = ~ FP)
   }
   
   list(mod_al = list(HZ = hazard.msm(mod_al),

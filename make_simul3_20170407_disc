@@ -1,0 +1,27 @@
+RMD2HTML = run-knit2html.R
+
+size = 10
+SEED = 508 307 427 692 85 225 273 271 611 426
+#SEED = 646 562 113 589 354 423  52 260 392 821
+# Generat amb "set.seed(10); sample.int(n = 1000, size = 20)"
+DATA_no = $(foreach v,$(SEED),$(shell printf 'simul3_disc_no_$(scale)_$(shape)_%03d_$(n)_$(nsim).RData' $(v)))
+DATA_left = $(foreach v,$(SEED),$(shell printf 'simul3_disc_left_$(scale)_$(shape)_%03d_$(n)_$(nsim).RData' $(v)))
+DATA = $(DATA_no) $(DATA_left)
+# simul3_no_$(scale)_$(shape)_all_$(n)_$(nsim).RData simul3_left_$(scale)_$(shape)_all_$(n)_$(nsim).RData
+
+#WWW = simul3_$(scale)_$(shape)_10_$(n)_$(nsim).html
+
+common : $(DATA)
+	touch $@
+
+simul3_disc_no_$(scale)_$(shape)_%_$(n)_$(nsim).RData : art_simul_scenari3_20170407_disc.R
+	Rscript -e 'Nsim <- $(nsim); N <- $(n); left <- F; trans12_exp <- F; fp_simul <- T; HR_FP <- $(HR); scale_param <- $(scale); shape_param <- $(shape); pci <- T; fixed_pci <- F; afegir_CC <- F; sensibilitat <- T; prob_cens2 <- 1 - c(0.853, 0.793); prob_cens3 <- 1 - c(0.888, 0.847); prob_cens4 <- 1 - c(0.899, 0.863); prob_cens5 <- 1 - c(0.920, 0.897); prob_cens6 <- 1 - c(0.936, 0.918); prob_cens7 <- 1 - c(0.960, 0.946); prob_fp_1 <- 9.610631/100; prob_fp_2 <- 3.973549/100; prob_fp_3 <- 3.057781/100; prob_fp_4 <- 2.798582/100; prob_fp_5 <- 2.410195/100; OFILE <- "$@"; source("$<")'
+
+simul3_disc_left_$(scale)_$(shape)_%_$(n)_$(nsim).RData : art_simul_scenari3_20170407_disc.R
+	Rscript -e 'Nsim <- $(nsim); N <- $(n); left <- T; trans12_exp <- F; fp_simul <- T; HR_FP <- $(HR); scale_param <- $(scale); shape_param <- $(shape); pci <- T; fixed_pci <- F; afegir_CC <- F; sensibilitat <- T; prob_cens2 <- 1 - c(0.853, 0.793); prob_cens3 <- 1 - c(0.888, 0.847); prob_cens4 <- 1 - c(0.899, 0.863); prob_cens5 <- 1 - c(0.920, 0.897); prob_cens6 <- 1 - c(0.936, 0.918); prob_cens7 <- 1 - c(0.960, 0.946); prob_fp_1 <- 9.610631/100; prob_fp_2 <- 3.973549/100; prob_fp_3 <- 3.057781/100; prob_fp_4 <- 2.798582/100; prob_fp_5 <- 2.410195/100; OFILE <- "$@"; source("$<")'
+
+#simul3_no_$(scale)_$(shape)_all_$(n)_$(nsim).RData : aux_unio_mod.R $(DATA_SEED)
+#	Rscript -e 'PATTERN <- "simul3_no_$(scale)_$(shape)_%03d_$(n)_$(nsim).RData"; size <- $(size); OFILE <- "$@"; source("$<");'
+
+# simul3_no_$(scale)_$(shape)_10_$(n)_$(nsim).html : art_simul_scenari3_out_20170411.Rmd simul3_$(scale)_$(shape)_all_$(n)_$(nsim).RData
+#	Rscript -e 'load("simul3_no_$(scale)_$(shape)_all_$(n)_$(nsim).RData"); Nsim <- $(nsim); N <- $(n); scale_param <- $(scale); shape_param <- $(shape); OUT <- "$@"; IN <- "$<"; source("$(RMD2HTML)")'

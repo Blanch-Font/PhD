@@ -1,0 +1,22 @@
+RMD2HTML = run-knit2html.R
+
+size = 10
+SEED = 508 307 427 692 85 225 273 271 611 426
+#SEED = 646 562 113 589 354 423  52 260 392 821
+# Generat amb "set.seed(10); sample.int(n = 1000, size = 20)"
+DATA_SEED = $(foreach v,$(SEED),$(shell printf 'simul1_$(scale)_$(shape)_%03d_$(n)_$(nsim).RData' $(v)))
+DATA = $(DATA_SEED) simul1_$(scale)_$(shape)_all_$(n)_$(nsim).RData
+
+WWW = simul1_$(scale)_$(shape)_10_$(n)_$(nsim).html
+
+common : $(DATA) $(WWW)
+	touch $@
+
+simul1_$(scale)_$(shape)_%_$(n)_$(nsim).RData : art_simul_scenari1_new_exp.R
+	Rscript -e 'Nsim <- $(nsim); N <- $(n); scale_param <- $(scale); shape_param <- $(shape); OFILE <- "$@"; set.seed($*); source("$<")'
+
+simul1_$(scale)_$(shape)_all_$(n)_$(nsim).RData : aux_unio_simul1.R $(DATA_SEED)
+	Rscript -e 'PATTERN <- "simul1_$(scale)_$(shape)_%03d_$(n)_$(nsim).RData"; size <- $(size); OFILE <- "$@"; source("$<");'
+
+simul1_$(scale)_$(shape)_10_$(n)_$(nsim).html : art_simul_scenari1_out_mix.Rmd simul1_$(scale)_$(shape)_all_$(n)_$(nsim).RData
+	Rscript -e 'load("simul1_$(scale)_$(shape)_all_$(n)_$(nsim).RData"); Nsim <- $(nsim); N <- $(n); scale_param <- $(scale); shape_param <- $(shape); OUT <- "$@"; IN <- "$<"; source("$(RMD2HTML)")'
